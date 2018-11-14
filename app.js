@@ -6,8 +6,8 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-var redirect_uri = 'http://localhost:8888/callback/'
-//var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = 'http://localhost:8888/callback/'
+var redirect_uri = "https://qroom.localtunnel.me/callback/"
 
 var clientTokens = {}
 
@@ -84,7 +84,7 @@ app.get('/addToQueue', function(req, res){
 
 		queue.push(songInfo);
 		console.log("Song Added to queue"+songInfo);
-		io.emit('queueUpdate', JSON.stringify(queue));
+		sendQueue();
 		if(queue.length == 1 && !songPlaying){
 			playSong();
 		}
@@ -101,6 +101,10 @@ io.on('connection', function(socket){
 	});
 });
 
+function sendQueue(){
+	io.emit('queueUpdate', JSON.stringify(queue));
+}
+
 function playSong(){
 	if(queue.length == 0){
 		songPlaying = false;
@@ -111,6 +115,8 @@ function playSong(){
 	//play song for each client
 	const songInfo = queue.shift();
 	var song = songInfo.songID;
+	//send updated queue
+	sendQueue();
 	console.log("song taken off queue"+song)
 	for( i in clientTokens){
 		console.log("Playing for: " + i);
