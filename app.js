@@ -11,15 +11,15 @@ var redirect_uri = 'http://localhost:8888/callback/'
 
 var clientTokens = {}
 
-var app= express()
-
-var rootURL= __dirname + '/public';
-
 var songPlaying = false;
 
 var queue= [];
 
-app.use(express.static(rootURL))
+var app= express()
+app.use(express.static(__dirname + '/public'))
+
+var http = require('http').Server(app);
+var io = require("socket.io")(http)
 
 app.get("/poop", function(req, res){
 	res.send("Poop")
@@ -64,10 +64,18 @@ app.get('/callback', function(req, res){
 app.get('/addToQueue', function(req, res){
 	queue.push(req.query.songCode);
 	console.log("Song Added to queue"+req.query.songCode);
+	io.emit('queueUpdate', JSON.stringify(queue));
 	if(queue.length == 1 && !songPlaying){
 		playSong();
 	}
 	
+});
+
+io.on('connection', function(socket){
+	console.log('a user connected');
+	socket.on('disconnect', function(){
+		console.log('user disconnected');
+	});
 });
 
 function playSong(){
@@ -122,8 +130,6 @@ function setSongTimeout(song){
 app.get("/join_room", function(req, res){
 	var username= req.query.username;
 	var token= req.query.access_token;
-	console.log(username);
-	console.log(token);
 	if(username && token){
 		clientTokens[username]= token;
 		console.log("Joined room: " + username);
@@ -141,4 +147,4 @@ function sendAccessToken(res, token){
 }
 
 console.log("Hit up 8888");
-app.listen(8888);
+http.listen(8888);

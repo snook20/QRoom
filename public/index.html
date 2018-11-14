@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>QRoom</title>
-	</head>
+	</head>	
 	<body>
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
@@ -187,5 +187,17 @@
 				$.get("/join_room", dataObject);
 			}
 		</script>
+		
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			var socket = io();
+			$(function(){
+				var sock= io();
+				sock.on("queueUpdate", function(queue){
+					console.log(queue);
+				});
+			});
+		</script>
+		
 	</body>
 </html>
