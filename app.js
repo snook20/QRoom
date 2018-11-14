@@ -7,7 +7,8 @@ var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
 // var redirect_uri = 'http://localhost:8888/callback/'
-var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = "https://qroom.localtunnel.me/callback/"
+var redirect_uri = "https://queueroom.localtunnel.me/callback/"
 
 var clientTokens = {}
 
@@ -149,6 +150,7 @@ app.get("/join_room", function(req, res){
 	var token= req.query.access_token;
 	if(username && token){
 		clientTokens[username]= token;
+		sendQueue();
 		console.log("Joined room: " + username);
 	}
 	else{
