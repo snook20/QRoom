@@ -2,21 +2,42 @@
 <html>
 	<head>
 		<title>QRoom</title>
+		<style>
+			#loggedin {
+				display: flex;
+			}
+
+			#search_col{
+				flex: 40%;
+				padding: 10px;
+			}
+			
+			#queue_col{
+				flex: 60%;
+				padding: 10px;
+			}
+		</style>
 	</head>	
 	<body>
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
 		</div>
 		<div id = "loggedin">
-			<button id= "getPlaybackInfo">Get info</button>
-			<div id = "name"></div>
-			
-			<form id="songInputForm">
-			  Song search: <input type="text" name="song_search" value="Sunflower"><br>
-			</form>
-			<button id= "songButton">Search</button>
-			
-			<div id= "search_list"></div>
+			<div id= "search_col"> <!-- search column -->
+				<button id= "getPlaybackInfo">Get info</button>
+				<div id = "name"></div>
+				
+				<form id="songInputForm">
+				  Song search: <input type="text" name="song_search" value="Sunflower"><br>
+				</form>
+				<button id= "songButton">Search</button>
+				
+				<div id= "search_list"></div>
+			</div> <!-- search column -->
+			<div id= "queue_col"> <!-- queue column -->
+				<div><u>Queue</u></div><br>
+				<div id= "queue"></div>
+			</div> <!-- queue column -->
 		</div>
 		
 		<script id = "name_template" type="text/x-handlebars-template">
@@ -194,9 +215,42 @@
 			$(function(){
 				var sock= io();
 				sock.on("queueUpdate", function(queue){
-					console.log(queue);
+					layoutQueue(JSON.parse(queue));
 				});
 			});
+			
+			var queue= [
+				{
+					artist : "Pink Floyd",
+					title : "Atom Heart Mother"
+				},
+				{
+					artist : "The Beatles",
+					title : "Her Majesty"
+				},
+				{
+					artist : "Rex Orange County",
+					title : "Sunflower"
+				}
+			];
+			
+			layoutQueue(queue);
+			
+			function layoutQueue(queue){
+				var html= "";
+				for(i in queue){
+					html+= getSongDiv(queue, i) + "<br>";
+				}
+				
+				document.getElementById("queue").innerHTML= html;
+			}
+			
+			function getSongDiv(queue, i){
+				song= queue[i];
+				var info= song.artist + " : " + song.title;
+				var index= parseInt(i)+1;
+				return "<div>" + index + ") " + info + "</div>";
+			}
 		</script>
 		
 	</body>
