@@ -62,13 +62,36 @@ app.get('/callback', function(req, res){
 });
 
 app.get('/addToQueue', function(req, res){
-	queue.push(req.query.songCode);
-	console.log("Song Added to queue"+req.query.songCode);
-	io.emit('queueUpdate', JSON.stringify(queue));
-	if(queue.length == 1 && !songPlaying){
-		playSong();
+		
+	const options= {
+			url: 'https://api.spotify.com/v1/tracks/'+req.query.songCode.substring(14), //removes spotify:track: from song
+			method: 'GET',
+			headers: {
+				'Authorization' : 'Bearer ' + clientTokens[Object.keys(clientTokens)[0]]
+		}			
 	}
+
+	request(options, function(error, response, body){
+		console.log(body);
+		body = JSON.parse(body);
+		console.log(body.id);
+		const songInfo= {
+			songID: req.query.songCode,
+			title: body.name,
+			artist: body.artists[0].name,
+			duration: body.duration_ms
+		}
+
+		queue.push(songInfo);
+		console.log("Song Added to queue"+songInfo);
+		io.emit('queueUpdate', JSON.stringify(queue));
+		if(queue.length == 1 && !songPlaying){
+			playSong();
+		}
 	
+	
+});
+
 });
 
 io.on('connection', function(socket){
@@ -86,7 +109,8 @@ function playSong(){
 	songPlaying = true;
 	console.log(clientTokens);
 	//play song for each client
-	var song = queue.shift();
+	const songInfo = queue.shift();
+	var song = songInfo.songID;
 	console.log("song taken off queue"+song)
 	for( i in clientTokens){
 		console.log("Playing for: " + i);
@@ -103,28 +127,15 @@ function playSong(){
 		}
 		
 		request(options, function(error, response, body){
+			console.log(body);
 		});
 	}
-	//removes spotify:track: from song
-	setSongTimeout(song.substring(14));
+	
+	setSongTimeout(songInfo);
 }
 
-function setSongTimeout(song){
-	console.log("Song\n"+song)
-	const options= {
-		url: 'https://api.spotify.com/v1/tracks/'+song,
-		method: 'GET',
-		headers: {
-			'Authorization' : 'Bearer ' + clientTokens[Object.keys(clientTokens)[0]]
-		}			
-	}
-
-	request(options, function(error, response, body){
-		body = JSON.parse(body);
-		console.log("duration\n"+body.duration_ms);
-		setTimeout(playSong, body.duration_ms)
-		console.log("timeout Set"+body);
-	});
+function setSongTimeout(songInfo){
+	setTimeout(playSong,songInfo.duration) 
 }
 
 app.get("/join_room", function(req, res){
