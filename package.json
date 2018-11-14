@@ -1,6 +1,6 @@
 {
-	"author": "Harry",
-	"name": "testing",
+	"author": "JARSHT",
+	"name": "QRoom",
 	"start": "node app.js",
 	"dependencies": {
 		"express": "~4.16.0",
