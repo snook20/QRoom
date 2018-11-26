@@ -62,6 +62,11 @@ app.get('/callback', function(req, res){
 	});
 });
 
+app.get('/getqueue', function(req, res){
+	console.log("queue requested");
+	res.json(makeQueueInfoObject());
+});
+
 app.get('/addToQueue', function(req, res){
 	
 	const options= {
@@ -103,21 +108,22 @@ io.on('connection', function(socket){
 });
 
 function sendQueue(socket){
-	const info = {
-		playing : currentSong,
-		queue : queue
-	}
 	console.log("Sending queue");
-	socket.emit('queueUpdate', JSON.stringify(info));
+	socket.emit('queueUpdate', JSON.stringify(makeQueueInfoObject()));
 }
 
 function sendAllQueue(){
+	console.log("Sending queue");
+	io.emit('queueUpdate', JSON.stringify(makeQueueInfoObject()));
+}
+
+function makeQueueInfoObject(){
 	const info = {
 		playing : currentSong,
 		queue : queue
 	}
-	console.log("Sending queue");
-	io.emit('queueUpdate', JSON.stringify(info));
+	
+	return info;
 }
 
 function playSong(){

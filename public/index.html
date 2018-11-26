@@ -109,7 +109,7 @@
 			
 			function getPlaybackInfo(){
 				const options= {
-					url: 'https://api.spotify.com/v1/me/player',
+					url: '/getqueue',
 					method: 'GET',
 					headers: {
 						'Authorization' : 'Bearer ' + access_token
@@ -117,7 +117,7 @@
 				}
 				
 				$.get(options, function(error, response, body){
-					console.log(body.responseJSON)
+					layoutQueue(body.responseJSON);
 				});
 			}
 			
