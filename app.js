@@ -83,7 +83,7 @@ app.get('/addToQueue', function(req, res){
 
 		queue.push(songInfo);
 		console.log("Song Added to queue: "+songInfo.title);
-		sendQueue();
+		sendAllQueue();
 		if(queue.length == 1 && currentSong == null){
 			playSong();
 		}
@@ -94,13 +94,24 @@ app.get('/addToQueue', function(req, res){
 });
 
 io.on('connection', function(socket){
+	console.log(socket.handshake.query.name);
 	console.log('a user connected');
+	sendQueue(socket);
 	socket.on('disconnect', function(){
 		console.log('user disconnected');
 	});
 });
 
-function sendQueue(){
+function sendQueue(socket){
+	const info = {
+		playing : currentSong,
+		queue : queue
+	}
+	console.log("Sending queue");
+	socket.emit('queueUpdate', JSON.stringify(info));
+}
+
+function sendAllQueue(){
 	const info = {
 		playing : currentSong,
 		queue : queue
@@ -139,7 +150,7 @@ function playSong(){
 		});
 	}
 	
-	sendQueue();
+	sendAllQueue();
 	
 	setSongTimeout(currentSong);
 }
@@ -154,7 +165,6 @@ app.get("/join_room", function(req, res){
 	if(username && token){
 		clientTokens[username]= token;
 		console.log("Joined room: " + username);
-		sendQueue();
 	}
 	else{
 		console.log("Falied to join");

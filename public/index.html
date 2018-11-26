@@ -172,9 +172,7 @@
 			}
 			
 			//if we have an access token, get our info and display it
-			if(access_token){
-				var username;
-				
+			if(access_token){		
 				const options= {
 					url : "https://api.spotify.com/v1/me",
 					method : "GET",
@@ -186,8 +184,22 @@
 				$.get(options, function(error, responce, body){
 					joinRoom(body.responseJSON.display_name, access_token);
 					layoutStuff(body.responseJSON);
+					
+					$(function(){
+						var socket= io({
+						  autoConnect: false,
+						  query: {
+							name: body.responseJSON.display_name
+						  }
+						});
+						socket.connect();
+						socket.on("queueUpdate", function(info){
+							console.log("Recivied queue");
+							console.log(info);
+							layoutQueue(JSON.parse(info));
+						});
+					});
 				});
-				
 
 				$("#login").hide();
 				$("#loggedin").show();
@@ -204,14 +216,7 @@
 		
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			$(function(){
-				var socket= io();
-				socket.on("queueUpdate", function(info){
-					console.log("Recivied queue");
-					console.log(info);
-					layoutQueue(JSON.parse(info));
-				});
-			});
+			
 			
 			function layoutQueue(info){
 				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
