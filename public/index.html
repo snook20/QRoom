@@ -28,7 +28,7 @@
 				<div id = "name"></div>
 				
 				<form id="songInputForm">
-				  Song search: <input type="text" name="song_search" value="Sunflower"><br>
+					Song search: <input type="text" name="song_search" value="Her Majesty Beatles"><br>
 				</form>
 				<button id= "songButton">Search</button>
 				
@@ -46,38 +46,36 @@
 		
 		<script src="https://sdk.scdn.co/spotify-player.js"></script>
 		<script>
-			
-			console.log("setting up web player")
 			window.onSpotifyWebPlaybackSDKReady = () => {
-			  const token = getHashParams().token;
+			const token = getHashParams().token;
 
-			  const player = new Spotify.Player({
-				name: 'Web Playback SDK Quick Start Player',
+			const player = new Spotify.Player({
+				name: 'QRoom Player',
 				getOAuthToken: cb => { cb(token); }
-			  });
+			});
 
-			  // Error handling
-			  player.addListener('initialization_error', ({ message }) => { console.error(message); });
-			  player.addListener('authentication_error', ({ message }) => { console.error(message); });
-			  player.addListener('account_error', ({ message }) => { console.error(message); });
-			  player.addListener('playback_error', ({ message }) => { console.error(message); });
+			// Error handling
+			player.addListener('initialization_error', ({ message }) => { console.error(message); });
+			player.addListener('authentication_error', ({ message }) => { console.error(message); });
+			player.addListener('account_error', ({ message }) => { console.error(message); });
+			player.addListener('playback_error', ({ message }) => { console.error(message); });
 
-			  // Playback status updates
-			  player.addListener('player_state_changed', state => { console.log(state); });
+			// Playback status updates
+			player.addListener('player_state_changed', state => { console.log(state); });
 
-			  // Ready
-			  player.addListener('ready', ({ device_id }) => {
-				console.log('Ready with Device ID', device_id);
-			  });
+			// Ready
+			player.addListener('ready', ({ device_id }) => {
+			console.log('Ready with Device ID', device_id);
+			});
 
-			  // Not Ready
-			  player.addListener('not_ready', ({ device_id }) => {
-				console.log('Device ID has gone offline', device_id);
-			  });
+			// Not Ready
+			player.addListener('not_ready', ({ device_id }) => {
+			console.log('Device ID has gone offline', device_id);
+			});
 
-			  // Connect to the player!
-			  player.connect();
-			};
+			// Connect to the player!
+			player.connect();
+		};
 			
 		</script>
 		
@@ -103,7 +101,6 @@
 			}
 		
 			function layoutStuff(userObject){
-				console.log("layoutStuff");
 				var source= document.getElementById("name_template").innerHTML;
 				var template= Handlebars.compile(source);
 				
@@ -120,7 +117,6 @@
 				}
 				
 				$.get(options, function(error, response, body){
-					console.log(body);
 					console.log(body.responseJSON)
 				});
 			}
@@ -132,7 +128,6 @@
 			};
 			
 			function searchSong(title){
-				console.log("playsongtitle");
 				title.replace(/ /g, "+");
 				const options = {
 					url: 'https://api.spotify.com/v1/search?q='+title+'&type=track',
@@ -149,8 +144,6 @@
 			
 			//lays out up to n tracks from the tracks object
 			function layoutSearch(tracks, n){
-				console.log(tracks);
-				console.log(tracks.items[0].artists[0].name);
 				var html = ""
 				
 				n= Math.min(n, tracks.items.length);
@@ -211,33 +204,19 @@
 		
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
-			var socket = io();
 			$(function(){
-				var sock= io();
-				sock.on("queueUpdate", function(queue){
-					layoutQueue(JSON.parse(queue));
+				var socket= io();
+				socket.on("queueUpdate", function(info){
+					console.log("Recivied queue");
+					console.log(info);
+					layoutQueue(JSON.parse(info));
 				});
 			});
 			
-			var queue= [
-				{
-					artist : "Pink Floyd",
-					title : "Atom Heart Mother"
-				},
-				{
-					artist : "The Beatles",
-					title : "Her Majesty"
-				},
-				{
-					artist : "Rex Orange County",
-					title : "Sunflower"
-				}
-			];
-			
-			function layoutQueue(queue){
-				var html= "";
-				for(i in queue){
-					html+= getSongDiv(queue, i) + "<br>";
+			function layoutQueue(info){
+				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
+				for(i in info.queue){
+					html+= getSongDiv(info.queue, i) + "<br>";
 				}
 				
 				document.getElementById("queue").innerHTML= html;

@@ -6,18 +6,18 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-// var redirect_uri = 'http://localhost:8888/callback/'
+var redirect_uri = 'http://localhost:8888/callback/'
 // var redirect_uri = "https://qroom.localtunnel.me/callback/"
-var redirect_uri = "https://queueroom.localtunnel.me/callback/"
 
 var clientTokens = {}
 
-var songPlaying = false;
-
 var queue= [];
+var currentSong= null;
+
+var rootPath= __dirname + '/public';
 
 var app= express()
-app.use(express.static(__dirname + '/public'))
+app.use(express.static(rootPath))
 
 var http = require('http').Server(app);
 var io = require("socket.io")(http)
@@ -63,7 +63,7 @@ app.get('/callback', function(req, res){
 });
 
 app.get('/addToQueue', function(req, res){
-		
+	
 	const options= {
 			url: 'https://api.spotify.com/v1/tracks/'+req.query.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
@@ -73,9 +73,7 @@ app.get('/addToQueue', function(req, res){
 	}
 
 	request(options, function(error, response, body){
-		console.log(body);
 		body = JSON.parse(body);
-		console.log(body.id);
 		const songInfo= {
 			songID: req.query.songCode,
 			title: body.name,
@@ -84,14 +82,14 @@ app.get('/addToQueue', function(req, res){
 		}
 
 		queue.push(songInfo);
-		console.log("Song Added to queue"+songInfo);
+		console.log("Song Added to queue: "+songInfo.title);
 		sendQueue();
-		if(queue.length == 1 && !songPlaying){
+		if(queue.length == 1 && currentSong == null){
 			playSong();
 		}
 	
 	
-});
+	});
 
 });
 
@@ -103,24 +101,27 @@ io.on('connection', function(socket){
 });
 
 function sendQueue(){
-	io.emit('queueUpdate', JSON.stringify(queue));
+	const info = {
+		playing : currentSong,
+		queue : queue
+	}
+	console.log("Sending queue");
+	io.emit('queueUpdate', JSON.stringify(info));
 }
 
 function playSong(){
 	if(queue.length == 0){
-		songPlaying = false;
+		currentSong = null;
 		return;
 	}
-	songPlaying = true;
-	console.log(clientTokens);
+	
 	//play song for each client
-	const songInfo = queue.shift();
-	var song = songInfo.songID;
-	//send updated queue
-	sendQueue();
-	console.log("song taken off queue"+song)
+	currentSong = queue.shift();
+	var song = currentSong.songID;
+	
+	console.log("Playing song: "+song)
 	for( i in clientTokens){
-		console.log("Playing for: " + i);
+		console.log("\tPlaying for: " + i);
 		const options= {
 			url: 'https://api.spotify.com/v1/me/player/play',
 			method: 'PUT',
@@ -134,11 +135,13 @@ function playSong(){
 		}
 		
 		request(options, function(error, response, body){
-			console.log(body);
+			
 		});
 	}
 	
-	setSongTimeout(songInfo);
+	sendQueue();
+	
+	setSongTimeout(currentSong);
 }
 
 function setSongTimeout(songInfo){
@@ -150,8 +153,8 @@ app.get("/join_room", function(req, res){
 	var token= req.query.access_token;
 	if(username && token){
 		clientTokens[username]= token;
-		sendQueue();
 		console.log("Joined room: " + username);
+		sendQueue();
 	}
 	else{
 		console.log("Falied to join");
