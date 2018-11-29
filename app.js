@@ -7,22 +7,50 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-// var redirect_uri = 'http://localhost:8888/callback/'
-var redirect_uri = "https://qroom.localtunnel.me/callback/"
-// var redirect_uri = "https://qqroom.localtunnel.me/callback/"
-
-var clientTokens = {}
-
-var queue= [];
-var currentSong= null;
+var redirect_uri = 'http://localhost:8888/callback/';
+var hub_uri = 'http://localhost:8888/lobby';
+// var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = "https://queueroom.localtunnel.me/callback/"
 
 var rootPath= __dirname + '/public';
 
-var app= express()
-app.use(express.static(rootPath))
+var app= express();
+app.use(express.static(rootPath));
 
 var queueEventEmitter= new EventEmitter();
 queueEventEmitter.setMaxListeners(10);
+
+class room {
+    constructor(roomName) {
+        this.title = roomName;
+        //key: username, value: token
+        this.clientTokens = {};
+        //song queue
+        this.queue = [];
+        //song currently playing
+        this.currentSong = null;
+    }
+    addClient(username, token) {
+        this.clientTokens[username] = token;
+    }
+    removeClient(username) {
+        if (Object.values(this.clientTokens).indexOf(username) != -1) {
+            this.clientTokens.splice(Object.values(this.clientTokens).indexOf(username), 1)
+        }
+    }
+}
+
+var root = new room("root");
+var room1 = new room("[1]");
+var room2 = new room("[2]");
+var room3 = new room("[3]");
+
+//this is an array of all rooms
+var rooms = [root, room1, room2, room3];
+
+//key: token, value: room
+//this is an object of which rooms people are listening in
+var roomList = {};
 
 app.get("/poop", function(req, res){
 	res.send("Poop")
@@ -66,7 +94,7 @@ app.get('/callback', function(req, res){
 
 app.get('/getqueue', function(req, res){
 	console.log("queue requested");
-	
+
 	addQueuePoll(res);
 });
 
@@ -77,68 +105,99 @@ function addQueuePoll(res){
 }
 
 function emitQueue(){
-	queueEventEmitter.emit('getqueue', makeQueueInfoObject());
+	queueEventEmitter.emit('getqueue', makeQueueInfoObject(root)); //THIS IS A BUG, IT SHOULD NOT BE ROOT
 }
 
 app.get('/addToQueue', function(req, res){
-	
+
+    current_room = roomList[req.query.accessToken];
+
 	const options= {
 			url: 'https://api.spotify.com/v1/tracks/'+req.query.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
 			headers: {
-				'Authorization' : 'Bearer ' + clientTokens[Object.keys(clientTokens)[0]]
+				'Authorization' : 'Bearer ' + req.query.accessToken
 		}			
-	}
-	
+	};
+
 	request(options, function(error, response, body){
-		console.log(body);
+		//console.log(body);
 		body = JSON.parse(body);
-		
+
 		const songInfo= {
 			songID: req.query.songCode,
 			title: body.name,
 			artist: body.artists[0].name,
 			duration: body.duration_ms
-		}
+		};
 
-		queue.push(songInfo);
+		current_room.queue.push(songInfo);
 		console.log("Song Added to queue: "+songInfo.title);
-		
-		if(queue.length == 1 && currentSong == null){
-			playSong();
+
+		if(current_room.queue.length == 1 && current_room.currentSong == null){
+			playSong(current_room);
 		}
 	
 		emitQueue();
 	});
+
 });
 
-function makeQueueInfoObject(){
+app.get('/getRooms', function(req, res) {
+
+    current_room = roomList[req.query.access_token];
+    available_rooms = JSON.parse(JSON.stringify(rooms));
+    available_rooms.splice(current_room, 1);
+    res.json(available_rooms);
+
+});
+
+app.get('/moveToRoom', function(req, res) {
+
+    current_room = roomList[req.query.accessToken];
+    move_to = rooms[req.query.moveTo];
+
+    console.log("room:" + JSON.stringify(move_to));
+    if(current_room !== move_to) {
+        if(current_room.clientTokens[req.query.username] == req.query.accessToken) {
+            current_room.removeClient(req.query.username);
+            move_to.addClient(req.query.username, req.query.accessToken);
+        }
+    }
+
+    console.log("Moved " + req.query.username + " from room " + current_room.title + " to room " + move_to.title);
+
+});
+
+function makeQueueInfoObject(room){
 	const info = {
-		playing : currentSong,
-		queue : queue
+		playing : room.currentSong,
+		queue : room.queue
 	}
-	
+	console.log("Sending queue");
+	console.log(JSON.stringify(info));
+
 	return info;
 }
 
-function playSong(){
-	if(queue.length == 0){
-		currentSong = null;
+function playSong(room) {
+	if(room.queue.length == 0) {
+		room.currentSong = null;
 		return;
 	}
 	
 	//play song for each client
-	currentSong = queue.shift();
-	var song = currentSong.songID;
-	
-	console.log("Playing song: "+song)
-	for( i in clientTokens){
+	room.currentSong = room.queue.shift();
+	var song = room.currentSong.songID;
+
+	console.log("Playing song: "+room.currentSong.title);
+	for( i in room.clientTokens){
 		console.log("\tPlaying for: " + i);
 		const options= {
 			url: 'https://api.spotify.com/v1/me/player/play',
 			method: 'PUT',
 			headers: {
-				'Authorization' : 'Bearer ' + clientTokens[i]
+				'Authorization' : 'Bearer ' + room.clientTokens[i]
 			},
 				
 			body: JSON.stringify({
@@ -153,18 +212,19 @@ function playSong(){
 	
 	emitQueue();
 	
-	setSongTimeout(currentSong);
+	setSongTimeout(room, room.currentSong);
 }
 
-function setSongTimeout(songInfo){
-	setTimeout(playSong,songInfo.duration) 
+function setSongTimeout(room, songInfo){
+	setTimeout(playSong, songInfo.duration, room)
 }
 
 app.get("/join_room", function(req, res){
 	var username= req.query.username;
 	var token= req.query.access_token;
 	if(username && token){
-		clientTokens[username]= token;
+		root.addClient(username, token);
+		roomList[token] = root;
 		console.log("Joined room: " + username);
 	}
 	else{

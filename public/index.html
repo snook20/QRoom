@@ -22,21 +22,23 @@
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
 		</div>
-		<div id = "loggedin">
+		<div id = "loggedin" style="display:none">
 			<div id= "search_col"> <!-- search column -->
-				<button id= "getPlaybackInfo">Get info</button>
-				<div id = "name"></div>
+				<button id="getPlaybackInfo">Get info</button>
+				<div id ="name"></div>
 				
-				<form id="songInputForm">
-					Song search: <input type="text" name="song_search" value="Her Majesty Beatles"><br>
+				<form id="songInputForm" method="get">
+				  Song search: <input type="text" name="song_search" value="Sunflower"><br>
+                  <input type="submit" style="display:none"/>
 				</form>
-				<button id= "songButton">Search</button>
-				
-				<div id= "search_list"></div>
+                <button id="showRooms">Show rooms</button>
+				<div id="search_list"></div>
+                <div id="room_list">
+                </div> <!-- room column -->
 			</div> <!-- search column -->
-			<div id= "queue_col"> <!-- queue column -->
+			<div id="queue_col"> <!-- queue column -->
 				<div><u>Queue</u></div><br>
-				<div id= "queue"></div>
+				<div id="queue"></div>
 			</div> <!-- queue column -->
 		</div>
 		
@@ -81,9 +83,11 @@
 		
 		<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-		
+
 		<script>
+            var username = null;
 			var access_token = null;
+			var room_list = null;
 			$("#loggedin").hide();
 			/**
 				parses url hash data into object
@@ -122,10 +126,15 @@
 			}
 			
 			document.getElementById("getPlaybackInfo").onclick = function(){getPlaybackInfo()};
-			document.getElementById("songButton").onclick = function(){
-				var title= document.getElementById("songInputForm").elements[0].value;
-				searchSong(title);
-			};
+			document.getElementById("showRooms").onclick = function(){showRooms()};
+
+            // getting songs
+			$('#songInputForm').submit(function() {
+                var title = document.getElementById("songInputForm").elements[0].value;
+                searchSong(title);
+                //this should prevent page reloading
+                return false;
+            });
 			
 			function searchSong(title){
 				title.replace(/ /g, "+");
@@ -161,18 +170,35 @@
 			
 			function playSongCode(songCode){
 				var dataObject = {
+                    accessToken : access_token,
 					songCode : songCode
 				}
 				$.get('/addToQueue', dataObject);
 			}
-			
+
+			function showRooms() {
+                const options= {
+                    url: '/getRooms',
+                    method: 'GET',
+                    headers: {
+                        'Authorization' : 'Bearer ' + access_token
+                    }
+                }
+
+                $.get(options, function(error, response, body){
+                    layoutRooms(body.responseJSON);
+                    //since body.responseJSON is an array of rooms, save list to the client
+                    room_list = body.responseJSON;
+                });
+            }
+
 			if(!access_token){
 				var paramObject= getHashParams();
 				access_token= paramObject.token;
 			}
 			
 			//if we have an access token, get our info and display it
-			if(access_token){		
+			if(access_token){
 				const options= {
 					url : "https://api.spotify.com/v1/me",
 					method : "GET",
@@ -181,13 +207,14 @@
 					}
 				}
 				
-				$.get(options, function(error, responce, body){
-					joinRoom(body.responseJSON.display_name, access_token);
+				$.get(options, function(error, response, body){
+				    username = body.responseJSON.display_name;
+					joinRoom(username, access_token);
 					layoutStuff(body.responseJSON);
 					
 					//start polling for the queue
 					pollQueue();
-					
+
 				});
 
 				$("#login").hide();
@@ -201,12 +228,12 @@
 				}
 				$.get("/join_room", dataObject);
 			}
-			
+
 			function pollQueue(){
 				console.log("polling queue");
 				$.ajax({
 					method: 'GET',
-					url: '/getqueue', 
+					url: '/getqueue',
 					success: function(queueInfo){
 						layoutQueue(queueInfo)
 					},
@@ -215,7 +242,7 @@
 					},
 					timeout: 30000
 			  })
-			}			
+			}
 			
 			function layoutQueue(info){
 				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
@@ -232,7 +259,26 @@
 				var index= parseInt(i)+1;
 				return "<div>" + index + ") " + info + "</div>";
 			}
+
+            function layoutRooms(rooms) {
+                var html = "";
+                for (i in rooms) {
+                    html += '<button onclick="switchRoom('+i+')">'+rooms[i].title+'</button><br>';
+                }
+                document.getElementById("room_list").innerHTML = html;
+            }
+
+            function switchRoom(roomIndex) {
+                console.log(room_list[roomIndex]);
+                var room = room_list[roomIndex];
+                var dataObject = {
+                    username : username,
+                    accessToken : access_token,
+                    // roomIndex is used because there was problems moving a room object from JS to HTML and back to JS
+                    moveTo : roomIndex
+                };
+                $.get('/moveToRoom', dataObject);
+            }
 		</script>
-		
 	</body>
 </html>
