@@ -8,32 +8,15 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-<<<<<<< HEAD
 var redirect_uri = 'http://localhost:8888/callback/'
 // var redirect_uri = "https://qroom.localtunnel.me/callback/"
 // var redirect_uri = "https://qqroom.localtunnel.me/callback/"
-
-var clientTokens = {}
-
-var queue= [];
-var currentSong= null;
 
 var rootPath= __dirname + '/public';
 
 var app= express()
 app.use(express.static(rootPath));
 app.use(bodyParser.json());
-=======
-var redirect_uri = 'http://localhost:8888/callback/';
-var hub_uri = 'http://localhost:8888/lobby';
-// var redirect_uri = "https://qroom.localtunnel.me/callback/"
-// var redirect_uri = "https://queueroom.localtunnel.me/callback/"
-
-var rootPath= __dirname + '/public';
-
-var app= express();
-app.use(express.static(rootPath));
->>>>>>> bac2ab008d7269927d152082a2ea60557d1fbbe4
 
 var queueEventEmitter= new EventEmitter();
 queueEventEmitter.setMaxListeners(10);
@@ -111,7 +94,11 @@ app.get('/callback', function(req, res){
 });
 
 app.get("/getqueue", function(req, res){
-	res.json(makeQueueInfoObject());
+	console.log(req.query.access_token);
+	console.log(roomList);
+	room = roomList[req.query.access_token];
+	console.log(room.title);
+	res.json(makeQueueInfoObject(room));
 });
 
 app.get('/pollqueue', function(req, res){
@@ -163,29 +150,30 @@ app.post('/addToQueue', function(req, res){
 });
 
 app.get('/getRooms', function(req, res) {
-
+	console.log(req.query);
     current_room = roomList[req.query.access_token];
-    available_rooms = JSON.parse(JSON.stringify(rooms));
-    available_rooms.splice(current_room, 1);
+    available_rooms = rooms;
+    index = Object.keys(rooms).indexOf(req.query.access_token);
+	
     res.json(available_rooms);
 
 });
 
-app.get('/moveToRoom', function(req, res) {
-
-    current_room = roomList[req.query.accessToken];
-    move_to = rooms[req.query.moveTo];
+app.post('/moveToRoom', function(req, res) {
+    current_room = roomList[req.body.accessToken];
+    move_to = rooms[req.body.moveTo];
 
     console.log("room:" + JSON.stringify(move_to));
     if(current_room !== move_to) {
-        if(current_room.clientTokens[req.query.username] == req.query.accessToken) {
-            current_room.removeClient(req.query.username);
-            move_to.addClient(req.query.username, req.query.accessToken);
+        if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
+            current_room.removeClient(req.body.username);
+            move_to.addClient(req.body.username, req.body.accessToken);
+			roomList[req.body.accessToken] = move_to;
         }
     }
 
-    console.log("Moved " + req.query.username + " from room " + current_room.title + " to room " + move_to.title);
-
+    console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
+	res.json({name : move_to.title});
 });
 
 function makeQueueInfoObject(room){
