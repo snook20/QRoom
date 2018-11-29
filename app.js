@@ -18,8 +18,6 @@ var app= express()
 app.use(express.static(rootPath));
 app.use(bodyParser.json());
 
-var queueEventEmitter= new EventEmitter();
-queueEventEmitter.setMaxListeners(10);
 
 class room {
     constructor(roomName) {
@@ -30,6 +28,10 @@ class room {
         this.queue = [];
         //song currently playing
         this.currentSong = null;
+		
+		//queue emitter
+		this.queueEventEmitter = new EventEmitter();
+		this.queueEventEmitter.setMaxListeners(10);
     }
     addClient(username, token) {
         this.clientTokens[username] = token;
@@ -39,6 +41,19 @@ class room {
             this.clientTokens.splice(Object.values(this.clientTokens).indexOf(username), 1)
         }
     }
+	
+	emitQueue(){
+		this.queueEventEmitter.emit('pollqueue', this.makeQueueInfoObject());
+	}
+	
+	makeQueueInfoObject(){
+		const info = {
+			playing : this.currentSong,
+			queue : this.queue
+		}
+
+		return info;
+	}
 }
 
 var root = new room("root");
@@ -94,25 +109,19 @@ app.get('/callback', function(req, res){
 });
 
 app.get("/getqueue", function(req, res){
-	console.log(req.query.access_token);
-	console.log(roomList);
 	room = roomList[req.query.access_token];
-	console.log(room.title);
-	res.json(makeQueueInfoObject(room));
+	res.json(room.makeQueueInfoObject());
 });
 
 app.get('/pollqueue', function(req, res){
-	
-	queueEventEmitter.once('getqueue', function(queueInfo){
+
+	room = roomList[req.query.access_token];
+	room.queueEventEmitter.once('pollqueue', function(queueInfo){
+		console.log("Sending queue to " + req.query.username);
 		res.json(queueInfo);
 	});
 	
 });
-
-function emitQueue(){
-	console.log("Emitting queue");
-	queueEventEmitter.emit('getqueue', makeQueueInfoObject());
-}
 
 app.post('/addToQueue', function(req, res){
 
@@ -138,24 +147,26 @@ app.post('/addToQueue', function(req, res){
 		};
 
 		current_room.queue.push(songInfo);
-		console.log("Song Added to queue: "+songInfo.title);
+		console.log("Song Added to queue: "+songInfo.title + " in room " + current_room.title);
 
 		if(current_room.queue.length == 1 && current_room.currentSong == null){
 			playSong(current_room);
 		}
 	
-		emitQueue();
+		current_room.emitQueue();
 	});
 
 });
 
 app.get('/getRooms', function(req, res) {
-	console.log(req.query);
     current_room = roomList[req.query.access_token];
-    available_rooms = rooms;
-    index = Object.keys(rooms).indexOf(req.query.access_token);
+    
+	const dataObject = {
+		available_rooms : rooms,
+		index : Object.keys(rooms).indexOf(req.query.access_token)
+	};
 	
-    res.json(available_rooms);
+    res.json(dataObject);
 
 });
 
@@ -163,29 +174,24 @@ app.post('/moveToRoom', function(req, res) {
     current_room = roomList[req.body.accessToken];
     move_to = rooms[req.body.moveTo];
 
-    console.log("room:" + JSON.stringify(move_to));
     if(current_room !== move_to) {
+		//if user name and token are correct
         if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
             current_room.removeClient(req.body.username);
             move_to.addClient(req.body.username, req.body.accessToken);
+			current_room.emitQueue();
 			roomList[req.body.accessToken] = move_to;
+			console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
+			
+			const dataObject = {
+				room_name : move_to.title,
+				queueInfo : move_to.makeQueueInfoObject()
+			}
+			
+			res.json(dataObject);
         }
     }
-
-    console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
-	res.json({name : move_to.title});
 });
-
-function makeQueueInfoObject(room){
-	const info = {
-		playing : room.currentSong,
-		queue : room.queue
-	}
-	console.log("Sending queue");
-	console.log(JSON.stringify(info));
-
-	return info;
-}
 
 function playSong(room) {
 	if(room.queue.length == 0) {
@@ -217,7 +223,7 @@ function playSong(room) {
 		});
 	}
 	
-	emitQueue();
+	room.emitQueue();
 	
 	setSongTimeout(room, room.currentSong);
 }
@@ -233,9 +239,11 @@ app.post("/join_room", function(req, res){
 		root.addClient(username, token);
 		roomList[token] = root;
 		console.log("Joined room: " + username);
+		res.sendStatus(200);
 	}
 	else{
 		console.log("Falied to join");
+		res.sendStatus(451);
 	}
 });
 
