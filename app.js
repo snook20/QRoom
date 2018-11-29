@@ -2,23 +2,22 @@ var express= require("express")
 var request= require("request")
 var querystring= require("querystring")
 var EventEmitter = require("events").EventEmitter
+var bodyParser = require("body-parser")
 
 const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-var redirect_uri = 'http://localhost:8888/callback/';
-var hub_uri = 'http://localhost:8888/lobby';
+var redirect_uri = 'http://localhost:8888/callback/'
 // var redirect_uri = "https://qroom.localtunnel.me/callback/"
-// var redirect_uri = "https://queueroom.localtunnel.me/callback/"
+// var redirect_uri = "https://qqroom.localtunnel.me/callback/"
 
 var rootPath= __dirname + '/public';
 
-var app= express();
+var app= express()
 app.use(express.static(rootPath));
+app.use(bodyParser.json());
 
-var queueEventEmitter= new EventEmitter();
-queueEventEmitter.setMaxListeners(10);
 
 class room {
     constructor(roomName) {
@@ -29,6 +28,10 @@ class room {
         this.queue = [];
         //song currently playing
         this.currentSong = null;
+		
+		//queue emitter
+		this.queueEventEmitter = new EventEmitter();
+		this.queueEventEmitter.setMaxListeners(10);
     }
     addClient(username, token) {
         this.clientTokens[username] = token;
@@ -38,6 +41,19 @@ class room {
             this.clientTokens.splice(Object.values(this.clientTokens).indexOf(username), 1)
         }
     }
+	
+	emitQueue(){
+		this.queueEventEmitter.emit('pollqueue', this.makeQueueInfoObject());
+	}
+	
+	makeQueueInfoObject(){
+		const info = {
+			playing : this.currentSong,
+			queue : this.queue
+		}
+
+		return info;
+	}
 }
 
 var root = new room("root");
@@ -92,93 +108,90 @@ app.get('/callback', function(req, res){
 	});
 });
 
-app.get('/getqueue', function(req, res){
-	console.log("queue requested");
-
-	addQueuePoll(res);
+app.get("/getqueue", function(req, res){
+	room = roomList[req.query.access_token];
+	res.json(room.makeQueueInfoObject());
 });
 
-function addQueuePoll(res){
-	queueEventEmitter.once('getqueue', function(queueInfo){
+app.get('/pollqueue', function(req, res){
+
+	room = roomList[req.query.access_token];
+	room.queueEventEmitter.once('pollqueue', function(queueInfo){
+		console.log("Sending queue to " + req.query.username);
 		res.json(queueInfo);
 	});
-}
+	
+});
 
-function emitQueue(){
-	queueEventEmitter.emit('getqueue', makeQueueInfoObject(root)); //THIS IS A BUG, IT SHOULD NOT BE ROOT
-}
+app.post('/addToQueue', function(req, res){
 
-app.get('/addToQueue', function(req, res){
+    current_room = roomList[req.body.accessToken];
 
-    current_room = roomList[req.query.accessToken];
 
 	const options= {
-			url: 'https://api.spotify.com/v1/tracks/'+req.query.songCode.substring(14), //removes spotify:track: from song
+			url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
 			headers: {
-				'Authorization' : 'Bearer ' + req.query.accessToken
+				'Authorization' : 'Bearer ' + req.body.accessToken
 		}			
 	};
 
 	request(options, function(error, response, body){
-		//console.log(body);
 		body = JSON.parse(body);
 
 		const songInfo= {
-			songID: req.query.songCode,
+			songID: req.body.songCode,
 			title: body.name,
 			artist: body.artists[0].name,
 			duration: body.duration_ms
 		};
 
 		current_room.queue.push(songInfo);
-		console.log("Song Added to queue: "+songInfo.title);
+		console.log("Song Added to queue: "+songInfo.title + " in room " + current_room.title);
 
 		if(current_room.queue.length == 1 && current_room.currentSong == null){
 			playSong(current_room);
 		}
 	
-		emitQueue();
+		current_room.emitQueue();
 	});
 
 });
 
 app.get('/getRooms', function(req, res) {
-
     current_room = roomList[req.query.access_token];
-    available_rooms = JSON.parse(JSON.stringify(rooms));
-    available_rooms.splice(current_room, 1);
-    res.json(available_rooms);
+    
+	const dataObject = {
+		available_rooms : rooms,
+		index : Object.keys(rooms).indexOf(req.query.access_token)
+	};
+	
+    res.json(dataObject);
 
 });
 
-app.get('/moveToRoom', function(req, res) {
+app.post('/moveToRoom', function(req, res) {
+    current_room = roomList[req.body.accessToken];
+    move_to = rooms[req.body.moveTo];
 
-    current_room = roomList[req.query.accessToken];
-    move_to = rooms[req.query.moveTo];
-
-    console.log("room:" + JSON.stringify(move_to));
     if(current_room !== move_to) {
-        if(current_room.clientTokens[req.query.username] == req.query.accessToken) {
-            current_room.removeClient(req.query.username);
-            move_to.addClient(req.query.username, req.query.accessToken);
+		//if user name and token are correct
+        if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
+            current_room.removeClient(req.body.username);
+            move_to.addClient(req.body.username, req.body.accessToken);
+			current_room.emitQueue();
+			roomList[req.body.accessToken] = move_to;
+			console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
+			
+			const dataObject = {
+				room_name : move_to.title,
+				queueInfo : move_to.makeQueueInfoObject()
+			}
+			
+			res.json(dataObject);
         }
     }
-
-    console.log("Moved " + req.query.username + " from room " + current_room.title + " to room " + move_to.title);
-
 });
-
-function makeQueueInfoObject(room){
-	const info = {
-		playing : room.currentSong,
-		queue : room.queue
-	}
-	console.log("Sending queue");
-	console.log(JSON.stringify(info));
-
-	return info;
-}
 
 function playSong(room) {
 	if(room.queue.length == 0) {
@@ -210,7 +223,7 @@ function playSong(room) {
 		});
 	}
 	
-	emitQueue();
+	room.emitQueue();
 	
 	setSongTimeout(room, room.currentSong);
 }
@@ -219,16 +232,18 @@ function setSongTimeout(room, songInfo){
 	setTimeout(playSong, songInfo.duration, room)
 }
 
-app.get("/join_room", function(req, res){
-	var username= req.query.username;
-	var token= req.query.access_token;
+app.post("/join_room", function(req, res){
+	var username= req.body.username;
+	var token= req.body.access_token;
 	if(username && token){
 		root.addClient(username, token);
 		roomList[token] = root;
 		console.log("Joined room: " + username);
+		res.sendStatus(200);
 	}
 	else{
 		console.log("Falied to join");
+		res.sendStatus(451);
 	}
 });
 

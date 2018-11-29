@@ -24,7 +24,6 @@
 		</div>
 		<div id = "loggedin" style="display:none">
 			<div id= "search_col"> <!-- search column -->
-				<button id="getPlaybackInfo">Get info</button>
 				<div id ="name"></div>
 				
 				<form id="songInputForm" method="get">
@@ -37,6 +36,7 @@
                 </div> <!-- room column -->
 			</div> <!-- search column -->
 			<div id="queue_col"> <!-- queue column -->
+				<div id="roomLabel">root</div>
 				<div><u>Queue</u></div><br>
 				<div id="queue"></div>
 			</div> <!-- queue column -->
@@ -111,21 +111,6 @@
 				document.getElementById("name").innerHTML= template(userObject);
 			}
 			
-			function getPlaybackInfo(){
-				const options= {
-					url: '/getqueue',
-					method: 'GET',
-					headers: {
-						'Authorization' : 'Bearer ' + access_token
-					}
-				}
-				
-				$.get(options, function(error, response, body){
-					layoutQueue(body.responseJSON);
-				});
-			}
-			
-			document.getElementById("getPlaybackInfo").onclick = function(){getPlaybackInfo()};
 			document.getElementById("showRooms").onclick = function(){showRooms()};
 
             // getting songs
@@ -173,22 +158,31 @@
                     accessToken : access_token,
 					songCode : songCode
 				}
-				$.get('/addToQueue', dataObject);
+
+				$.ajax({
+					type: 'POST',
+					url : '/addToQueue',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json',
+				});
 			}
 
 			function showRooms() {
+				const dataObject = {
+					access_token : access_token,
+					username: username
+				}
                 const options= {
                     url: '/getRooms',
                     method: 'GET',
-                    headers: {
-                        'Authorization' : 'Bearer ' + access_token
-                    }
+					data: dataObject
                 }
 
                 $.get(options, function(error, response, body){
-                    layoutRooms(body.responseJSON);
+                    layoutRooms(body.responseJSON.available_rooms, body.responseJSON.index);
                     //since body.responseJSON is an array of rooms, save list to the client
-                    room_list = body.responseJSON;
+                    room_list = body.responseJSON.available_rooms;
+					
                 });
             }
 
@@ -211,10 +205,6 @@
 				    username = body.responseJSON.display_name;
 					joinRoom(username, access_token);
 					layoutStuff(body.responseJSON);
-					
-					//start polling for the queue
-					pollQueue();
-
 				});
 
 				$("#login").hide();
@@ -226,25 +216,65 @@
 					username : username,
 					access_token : access_token
 				}
-				$.get("/join_room", dataObject);
+				
+				$.ajax({
+					type: 'POST',
+					url : '/join_room',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json',
+					success : function(){
+						//start polling for the queue
+						console.log("joined room");
+						pollQueue();
+					}
+				});
 			}
 
 			function pollQueue(){
-				console.log("polling queue");
+				const dataObject = {
+					access_token : access_token,
+					username : username
+				}
+				
 				$.ajax({
 					method: 'GET',
-					url: '/getqueue',
+					url: '/pollqueue', 
+					data: dataObject,
 					success: function(queueInfo){
+						console.log("Recieved queue");
 						layoutQueue(queueInfo)
 					},
-					complete: function(){
+					error : function(){
+						console.log("Timeout or other failure");
+						//on a failure, send a get for the queue, to be send immideatly
+						getQueue();
+					},
+					complete : function(){
 						pollQueue()
 					},
 					timeout: 30000
 			  })
 			}
 			
+			function getQueue(){
+				const dataObject = {
+					access_token : access_token,
+				}
+				const options = {
+					url : '/getqueue',
+					type : 'GET',
+					data : dataObject
+				}
+				$.get(options, function(queueInfo){
+					layoutQueue(queueInfo);
+				});
+			}
+			
 			function layoutQueue(info){
+				if(info.playing == null){
+					document.getElementById("queue").innerHTML= "Empty queue - add a song with the search button";
+					return;
+				}
 				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
 				for(i in info.queue){
 					html+= getSongDiv(info.queue, i) + "<br>";
@@ -260,10 +290,15 @@
 				return "<div>" + index + ") " + info + "</div>";
 			}
 
-            function layoutRooms(rooms) {
+            function layoutRooms(rooms, currentIndex) {
                 var html = "";
                 for (i in rooms) {
-                    html += '<button onclick="switchRoom('+i+')">'+rooms[i].title+'</button><br>';
+					if (i == currentIndex) {
+						html += '<button onclick="switchRoom('+i+')" disabled>'+rooms[i].title+'</button><br>';
+					}
+					else {
+						html += '<button onclick="switchRoom('+i+')">'+rooms[i].title+'</button><br>';
+					}
                 }
                 document.getElementById("room_list").innerHTML = html;
             }
@@ -277,7 +312,17 @@
                     // roomIndex is used because there was problems moving a room object from JS to HTML and back to JS
                     moveTo : roomIndex
                 };
-                $.get('/moveToRoom', dataObject);
+                $.ajax({
+					url : '/moveToRoom',
+					type : 'POST',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json',
+					success : function(data){
+						console.log("new room");
+						document.getElementById("roomLabel").innerHTML= data.room_name;
+						layoutQueue(data.queueInfo);
+					}
+				});
             }
 		</script>
 	</body>
