@@ -169,7 +169,8 @@
 
 			function showRooms() {
 				const dataObject = {
-					access_token : access_token
+					access_token : access_token,
+					username: username
 				}
                 const options= {
                     url: '/getRooms',
@@ -178,9 +179,10 @@
                 }
 
                 $.get(options, function(error, response, body){
-                    layoutRooms(body.responseJSON);
+                    layoutRooms(body.responseJSON.available_rooms, body.responseJSON.index);
                     //since body.responseJSON is an array of rooms, save list to the client
-                    room_list = body.responseJSON;
+                    room_list = body.responseJSON.available_rooms;
+					
                 });
             }
 
@@ -229,9 +231,15 @@
 			}
 
 			function pollQueue(){
+				const dataObject = {
+					access_token : access_token,
+					username : username
+				}
+				
 				$.ajax({
 					method: 'GET',
 					url: '/pollqueue', 
+					data: dataObject,
 					success: function(queueInfo){
 						console.log("Recieved queue");
 						layoutQueue(queueInfo)
@@ -255,7 +263,7 @@
 				const options = {
 					url : '/getqueue',
 					type : 'GET',
-					data : JSON.stringify(dataObject)
+					data : dataObject
 				}
 				$.get(options, function(queueInfo){
 					layoutQueue(queueInfo);
@@ -282,10 +290,15 @@
 				return "<div>" + index + ") " + info + "</div>";
 			}
 
-            function layoutRooms(rooms) {
+            function layoutRooms(rooms, currentIndex) {
                 var html = "";
                 for (i in rooms) {
-                    html += '<button onclick="switchRoom('+i+')">'+rooms[i].title+'</button><br>';
+					if (i == currentIndex) {
+						html += '<button onclick="switchRoom('+i+')" disabled>'+rooms[i].title+'</button><br>';
+					}
+					else {
+						html += '<button onclick="switchRoom('+i+')">'+rooms[i].title+'</button><br>';
+					}
                 }
                 document.getElementById("room_list").innerHTML = html;
             }
@@ -304,9 +317,10 @@
 					type : 'POST',
 					data : JSON.stringify(dataObject),
 					contentType: 'application/json',
-					success : function(roomInfo){
+					success : function(data){
 						console.log("new room");
-						document.getElementById("roomLabel").innerHTML= roomInfo.name;
+						document.getElementById("roomLabel").innerHTML= data.room_name;
+						layoutQueue(data.queueInfo);
 					}
 				});
             }
