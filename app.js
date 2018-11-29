@@ -2,13 +2,14 @@ var express= require("express")
 var request= require("request")
 var querystring= require("querystring")
 var EventEmitter = require("events").EventEmitter
+var bodyParser = require("body-parser")
 
 const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-// var redirect_uri = 'http://localhost:8888/callback/'
-var redirect_uri = "https://qroom.localtunnel.me/callback/"
+var redirect_uri = 'http://localhost:8888/callback/'
+// var redirect_uri = "https://qroom.localtunnel.me/callback/"
 // var redirect_uri = "https://qqroom.localtunnel.me/callback/"
 
 var clientTokens = {}
@@ -19,7 +20,8 @@ var currentSong= null;
 var rootPath= __dirname + '/public';
 
 var app= express()
-app.use(express.static(rootPath))
+app.use(express.static(rootPath));
+app.use(bodyParser.json());
 
 var queueEventEmitter= new EventEmitter();
 queueEventEmitter.setMaxListeners(10);
@@ -64,26 +66,27 @@ app.get('/callback', function(req, res){
 	});
 });
 
-app.get('/getqueue', function(req, res){
-	console.log("queue requested");
-	
-	addQueuePoll(res);
+app.get("/getqueue", function(req, res){
+	res.json(makeQueueInfoObject());
 });
 
-function addQueuePoll(res){
+app.get('/pollqueue', function(req, res){
+	
 	queueEventEmitter.once('getqueue', function(queueInfo){
 		res.json(queueInfo);
 	});
-}
+	
+});
 
 function emitQueue(){
+	console.log("Emitting queue");
 	queueEventEmitter.emit('getqueue', makeQueueInfoObject());
 }
 
-app.get('/addToQueue', function(req, res){
+app.post('/addToQueue', function(req, res){
 	
 	const options= {
-			url: 'https://api.spotify.com/v1/tracks/'+req.query.songCode.substring(14), //removes spotify:track: from song
+			url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
 			headers: {
 				'Authorization' : 'Bearer ' + clientTokens[Object.keys(clientTokens)[0]]
@@ -91,11 +94,10 @@ app.get('/addToQueue', function(req, res){
 	}
 	
 	request(options, function(error, response, body){
-		console.log(body);
 		body = JSON.parse(body);
 		
 		const songInfo= {
-			songID: req.query.songCode,
+			songID: req.body.songCode,
 			title: body.name,
 			artist: body.artists[0].name,
 			duration: body.duration_ms
@@ -160,9 +162,9 @@ function setSongTimeout(songInfo){
 	setTimeout(playSong,songInfo.duration) 
 }
 
-app.get("/join_room", function(req, res){
-	var username= req.query.username;
-	var token= req.query.access_token;
+app.post("/join_room", function(req, res){
+	var username= req.body.username;
+	var token= req.body.access_token;
 	if(username && token){
 		clientTokens[username]= token;
 		console.log("Joined room: " + username);

@@ -163,7 +163,13 @@
 				var dataObject = {
 					songCode : songCode
 				}
-				$.get('/addToQueue', dataObject);
+
+				$.ajax({
+					type: 'POST',
+					url : '/addToQueue',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json',
+				});
 			}
 			
 			if(!access_token){
@@ -199,18 +205,31 @@
 					username : username,
 					access_token : access_token
 				}
-				$.get("/join_room", dataObject);
+				
+				$.ajax({
+					type: 'POST',
+					url : '/join_room',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json',
+				});
 			}
 			
 			function pollQueue(){
-				console.log("polling queue");
 				$.ajax({
 					method: 'GET',
-					url: '/getqueue', 
+					url: '/pollqueue', 
 					success: function(queueInfo){
+						console.log("Recieved queue");
 						layoutQueue(queueInfo)
 					},
-					complete: function(){
+					error : function(){
+						console.log("Timeout or other failure");
+						//on a failure, send a get for the queue, to be send immideatly
+						$.get('/getqueue', function(queueInfo){
+							layoutQueue(queueInfo);
+						});
+					},
+					complete : function(){
 						pollQueue()
 					},
 					timeout: 30000
@@ -218,6 +237,10 @@
 			}			
 			
 			function layoutQueue(info){
+				if(info.playing == null){
+					document.getElementById("queue").innerHTML= "Empty queue - add a song with the search button";
+					return;
+				}
 				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
 				for(i in info.queue){
 					html+= getSongDiv(info.queue, i) + "<br>";
