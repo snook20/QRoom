@@ -123,7 +123,7 @@ app.post('/addToQueue', function(req, res){
 			url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
 			headers: {
-				'Authorization' : 'Bearer ' + req.query.accessToken
+				'Authorization' : 'Bearer ' + req.body.accessToken
 		}			
 	};
 
