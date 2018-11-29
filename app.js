@@ -1,13 +1,15 @@
 var express= require("express")
 var request= require("request")
 var querystring= require("querystring")
+var EventEmitter = require("events").EventEmitter
 
 const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-var redirect_uri = 'http://localhost:8888/callback/'
-// var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = 'http://localhost:8888/callback/'
+var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = "https://qqroom.localtunnel.me/callback/"
 
 var clientTokens = {}
 
@@ -19,8 +21,8 @@ var rootPath= __dirname + '/public';
 var app= express()
 app.use(express.static(rootPath))
 
-var http = require('http').Server(app);
-var io = require("socket.io")(http)
+var queueEventEmitter= new EventEmitter();
+queueEventEmitter.setMaxListeners(10);
 
 app.get("/poop", function(req, res){
 	res.send("Poop")
@@ -64,8 +66,19 @@ app.get('/callback', function(req, res){
 
 app.get('/getqueue', function(req, res){
 	console.log("queue requested");
-	res.json(makeQueueInfoObject());
+	
+	addQueuePoll(res);
 });
+
+function addQueuePoll(res){
+	queueEventEmitter.once('getqueue', function(queueInfo){
+		res.json(queueInfo);
+	});
+}
+
+function emitQueue(){
+	queueEventEmitter.emit('getqueue', makeQueueInfoObject());
+}
 
 app.get('/addToQueue', function(req, res){
 	
@@ -76,9 +89,11 @@ app.get('/addToQueue', function(req, res){
 				'Authorization' : 'Bearer ' + clientTokens[Object.keys(clientTokens)[0]]
 		}			
 	}
-
+	
 	request(options, function(error, response, body){
+		console.log(body);
 		body = JSON.parse(body);
+		
 		const songInfo= {
 			songID: req.query.songCode,
 			title: body.name,
@@ -88,34 +103,14 @@ app.get('/addToQueue', function(req, res){
 
 		queue.push(songInfo);
 		console.log("Song Added to queue: "+songInfo.title);
-		sendAllQueue();
+		
 		if(queue.length == 1 && currentSong == null){
 			playSong();
 		}
 	
-	
-	});
-
-});
-
-io.on('connection', function(socket){
-	console.log(socket.handshake.query.name);
-	console.log('a user connected');
-	sendQueue(socket);
-	socket.on('disconnect', function(){
-		console.log('user disconnected');
+		emitQueue();
 	});
 });
-
-function sendQueue(socket){
-	console.log("Sending queue");
-	socket.emit('queueUpdate', JSON.stringify(makeQueueInfoObject()));
-}
-
-function sendAllQueue(){
-	console.log("Sending queue");
-	io.emit('queueUpdate', JSON.stringify(makeQueueInfoObject()));
-}
 
 function makeQueueInfoObject(){
 	const info = {
@@ -156,7 +151,7 @@ function playSong(){
 		});
 	}
 	
-	sendAllQueue();
+	emitQueue();
 	
 	setSongTimeout(currentSong);
 }
@@ -185,4 +180,4 @@ function sendAccessToken(res, token){
 }
 
 console.log("Hit up 8888");
-http.listen(8888);
+app.listen(8888);

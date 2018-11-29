@@ -185,20 +185,9 @@
 					joinRoom(body.responseJSON.display_name, access_token);
 					layoutStuff(body.responseJSON);
 					
-					$(function(){
-						var socket= io({
-						  autoConnect: false,
-						  query: {
-							name: body.responseJSON.display_name
-						  }
-						});
-						socket.connect();
-						socket.on("queueUpdate", function(info){
-							console.log("Recivied queue");
-							console.log(info);
-							layoutQueue(JSON.parse(info));
-						});
-					});
+					//start polling for the queue
+					pollQueue();
+					
 				});
 
 				$("#login").hide();
@@ -212,11 +201,21 @@
 				}
 				$.get("/join_room", dataObject);
 			}
-		</script>
-		
-		<script src="/socket.io/socket.io.js"></script>
-		<script>
 			
+			function pollQueue(){
+				console.log("polling queue");
+				$.ajax({
+					method: 'GET',
+					url: '/getqueue', 
+					success: function(queueInfo){
+						layoutQueue(queueInfo)
+					},
+					complete: function(){
+						pollQueue()
+					},
+					timeout: 30000
+			  })
+			}			
 			
 			function layoutQueue(info){
 				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
