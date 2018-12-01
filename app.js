@@ -9,7 +9,7 @@ var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
 var redirect_uri = 'http://localhost:8888/callback/'
-// var redirect_uri = "https://qroom.localtunnel.me/callback/"
+//var redirect_uri = "https://qroom.localtunnel.me/callback/"
 // var redirect_uri = "https://qqroom.localtunnel.me/callback/"
 
 var rootPath= __dirname + '/public';
@@ -114,7 +114,6 @@ app.get("/getqueue", function(req, res){
 });
 
 app.get('/pollqueue', function(req, res){
-
 	room = roomList[req.query.access_token];
 	room.queueEventEmitter.once('pollqueue', function(queueInfo){
 		console.log("Sending queue to " + req.query.username);
