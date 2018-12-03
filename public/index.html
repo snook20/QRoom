@@ -1,46 +1,111 @@
 <!doctype html>
 <html>
-	<head>
-		<title>QRoom</title>
-		<style>
-			#loggedin {
-				display: flex;
-			}
+<html lang="en">
+<head>
+	<title>QRoom</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<style>
 
-			#search_col{
-				flex: 40%;
-				padding: 10px;
-			}
-			
-			#queue_col{
-				flex: 60%;
-				padding: 10px;
-			}
-		</style>
-	</head>	
+		* {
+	    	box-sizing: border-box;
+		}
+
+		body {
+	    	font-family: Arial, Helvetica, sans-serif;
+		}
+
+		/* Style the header */
+		header {
+		    background-color: #123;
+		    line-height: 1px;
+		    padding: 10px;
+		    verticle
+		    text-align: left;
+		    font-size: 35px;
+		    color: white;
+		}
+
+		/* Create two columns/boxes that floats next to each other */
+		rooms {
+		    float: left;
+		    width: 25%;
+		    height: 500px; /* only for demonstration, should be removed */
+		    background: #ccc;
+		    padding: 20px;
+		}
+
+		queue {
+		    float: left;
+		    padding: 20px;
+		    width: 50%;
+		    background-color: #f1f1f1;
+		    height: 500px; /* only for demonstration, should be removed */
+		}
+
+		search {
+		    float: left;
+		    padding: 20px;
+		    width: 25%;
+		    background-color: #ccc;
+		    height: 500px; /* only for demonstration, should be removed */
+		}
+
+		/* Clear floats after the columns */
+		section:after {
+		    content: "";
+		    display: table;
+		    clear: both;
+		}
+
+		/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+		@media (max-width: 600px) {
+		    rooms, queue, search {
+		        width: 100%;
+		        height: 10%;
+		    }
+		}
+	</style>
+</head>
 	<body>
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
 		</div>
+			
 		<div id = "loggedin" style="display:none">
-			<div id= "search_col"> <!-- search column -->
-				<div id ="name"></div>
-				
-				<form id="songInputForm" method="get">
-				  Song search: <input type="text" name="song_search" value="Sunflower"><br>
-                  <input type="submit" style="display:none"/>
-				</form>
-                <button id="showRooms">Show rooms</button>
-				<div id="search_list"></div>
-                <div id="room_list">
-                </div> <!-- room column -->
-			</div> <!-- search column -->
-			<div id="queue_col"> <!-- queue column -->
-				<div id="roomLabel">root</div>
-				<div><u>Queue</u></div><br>
-				<div id="queue"></div>
-			</div> <!-- queue column -->
-		</div>
+			
+		<body>
+			<header>
+				<h1>QRoom</h1>
+				<h6><div id="name"></div></h6>
+				<h6><div id="roomLabel">root</div></h6>
+			</header>
+
+			<section>
+		  	  	<rooms>
+	  	   			<center><h3>Rooms</h3></center>
+				   	<button id="showRooms">Show rooms</button>
+				   	<div id="room_list"></div>
+				</rooms>
+				  
+			    <queue>
+				  	<center><h3>Queue</h3></center>
+				  	<div id="queue"></div>
+		   	    </queue>
+				  
+			    <search>
+				    <center><h3>Search</h3></center>
+				    <form id="songInputForm" method="get">
+						Song search: <input type="text" name="song_search" value="Sunflower"><br>
+						<input type="submit" style="display:none"/>
+					</form>
+					<div id="search_list"></div>	
+				</search>
+			</section>
+		</body>
+	</div>
+
 		
 		<script id = "name_template" type="text/x-handlebars-template">
 				Username : {{display_name}}
