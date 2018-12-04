@@ -66,6 +66,51 @@
 		        height: 10%;
 		    }
 		}
+		
+		/* styles for vlume switch*/
+		.switch {
+			position: relative;
+			display: inline-block;
+			width: 60px;
+			height: 34px;
+		}
+		
+		/* the off color */
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: #ccc;
+			-webkit-transition: .4s;
+			transition: .4s;
+		}
+		
+		/* the embedded square*/
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 26px;
+			width: 26px;
+			left: 4px;
+			bottom: 4px;
+			background-color: #f1f1f1;
+			-webkit-transition: .4s;
+			transition: .4s;
+		}
+		
+		/* the on color */
+		input:checked + .slider {
+			background-color: #123;
+		}
+		
+		input:checked + .slider:before {
+			-webkit-transform: translateX(26px);
+			-ms-transform: translateX(26px);
+			transform: translateX(26px);
+		}
 	</style>
 </head>
 	<body>
@@ -83,7 +128,7 @@
 			</header>
 
 			<section>
-		  	  	<rooms>
+				<rooms>
 	  	   			<center><h3>Rooms</h3></center>
 				   	<button id="showRooms">Show rooms</button>
 				   	<div id="room_list"></div>
@@ -92,6 +137,10 @@
 			    <queue>
 				  	<center><h3>Queue</h3></center>
 				  	<div id="queue"></div>
+					<label align="bottom" class="switch">
+						<input id="volumeSwitch" type="checkbox" checked onchange="changeVolume()">
+						<span class="slider"></span>
+					</label><br><br>
 		   	    </queue>
 				  
 			    <search>
@@ -103,6 +152,7 @@
 					<div id="search_list"></div>	
 				</search>
 			</section>
+			
 		</body>
 	</div>
 
@@ -122,13 +172,13 @@
 			});
 
 			// Error handling
-			player.addListener('initialization_error', ({ message }) => { console.error(message); });
-			player.addListener('authentication_error', ({ message }) => { console.error(message); });
-			player.addListener('account_error', ({ message }) => { console.error(message); });
-			player.addListener('playback_error', ({ message }) => { console.error(message); });
+			player.addListener('initialization_error', ({ message }) => { console.error("Player message " + message); });
+			player.addListener('authentication_error', ({ message }) => { console.error("Player message " + message); });
+			player.addListener('account_error', ({ message }) => { console.error("Player message " + message); });
+			player.addListener('playback_error', ({ message }) => { console.error("Player message " + message); });
 
 			// Playback status updates
-			player.addListener('player_state_changed', state => { console.log(state); });
+			player.addListener('player_state_changed', state => { /*console.log(state); */});
 
 			// Ready
 			player.addListener('ready', ({ device_id }) => {
@@ -185,7 +235,7 @@
                 searchSong(title);
                 //this should prevent page reloading
                 return false;
-            });
+			});
 			
 			function searchSong(title){
 				title.replace(/ /g, "+");
@@ -253,8 +303,7 @@
             }
 			
 			function activatePlayer(device_id){
-				console.log("token: " + access_token);
-				const options = {
+				$.ajax({
 					url: "https://api.spotify.com/v1/me/player",
 					method: 'PUT',
 					headers: {
@@ -267,16 +316,37 @@
 					}),
 					
 					error : function(message){
-						console.log("error");
+						console.log("failed to switch playback");
+					},
+					
+					success : function(body){
+						console.log("switched playback");
+					}
+				});
+			}
+			
+			function changeVolume(){
+				var volume = document.getElementById("volumeSwitch").checked ? 100 : 0;
+				$.ajax({
+					url: "https://api.spotify.com/v1/me/player/volume?volume_percent=" + volume,
+					method: 'PUT',
+					headers: {
+						'Authorization' : 'Bearer ' + access_token,
+						"Content-Type": "application/json"
+					},
+					
+					data : JSON.stringify({
+						volume_percent : volume
+					}),
+					
+					error : function(message){
+						console.log("failed to change volume");
 						console.log(message);
 					},
 					
 					success : function(body){
-						console.log("success");
-						console.log(body);
+						console.log("changed valume");
 					}
-				}
-				$.ajax(options, function(error, response, body){
 				});
 			}
 
