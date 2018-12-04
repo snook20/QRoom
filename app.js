@@ -8,8 +8,8 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-var redirect_uri = 'http://localhost:8888/callback/'
-//var redirect_uri = "https://qroom.localtunnel.me/callback/"
+// var redirect_uri = 'http://localhost:8888/callback/'
+var redirect_uri = "https://qroom.localtunnel.me/callback/"
 // var redirect_uri = "https://qqroom.localtunnel.me/callback/"
 
 var rootPath= __dirname + '/public';
@@ -68,6 +68,10 @@ var rooms = [root, room1, room2, room3];
 //this is an object of which rooms people are listening in
 var roomList = {};
 
+//key: token, value: queue listener
+//this map makes sure we only have one listener per user
+var listenerMap = {};
+
 app.get("/poop", function(req, res){
 	res.send("Poop")
 });
@@ -110,16 +114,34 @@ app.get('/callback', function(req, res){
 
 app.get("/getqueue", function(req, res){
 	room = roomList[req.query.access_token];
+	
+	if(!room){
+		res.sendStatus(420);
+		return;
+	}
+	
 	res.json(room.makeQueueInfoObject());
 });
 
 app.get('/pollqueue', function(req, res){
 	room = roomList[req.query.access_token];
-	room.queueEventEmitter.once('pollqueue', function(queueInfo){
+	
+	if(!room){
+		res.sendStatus(420);
+		return;
+	}
+	
+	var listener = function(queueInfo){
 		console.log("Sending queue to " + req.query.username);
 		res.json(queueInfo);
-	});
+	};
 	
+	if(listenerMap[req.query.access_token]){
+		room.queueEventEmitter.removeListener('pollqueue', listenerMap[req.query.access_token]);
+	}
+	
+	listenerMap[req.query.access_token]= listener;
+	room.queueEventEmitter.once('pollqueue', listener);
 });
 
 app.post('/addToQueue', function(req, res){
@@ -178,7 +200,7 @@ app.post('/moveToRoom', function(req, res) {
         if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
             current_room.removeClient(req.body.username);
             move_to.addClient(req.body.username, req.body.accessToken);
-			current_room.emitQueue();
+
 			roomList[req.body.accessToken] = move_to;
 			console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
 			
@@ -188,8 +210,18 @@ app.post('/moveToRoom', function(req, res) {
 			}
 			
 			res.json(dataObject);
+			
+			//move the listener
+			var listener= listenerMap[req.query.access_token];
+			if(listener){
+				current_room.queueEventEmitter.removeListener('pollqueue', listener);
+				move_to.queueEventEmitter.once('pollqueue', listener);
+			}
         }
     }
+	else{
+		console.log(req.body.username + " already in room " + current_room.title);
+	}
 });
 
 function playSong(room) {
