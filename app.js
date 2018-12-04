@@ -27,6 +27,8 @@ class room {
         this.queue = [];
         //song currently playing
         this.currentSong = null;
+        //when song started to play
+		this.songStartTime = null;
 		
 		//queue emitter
 		this.queueEventEmitter = new EventEmitter();
@@ -52,6 +54,47 @@ class room {
 		}
 
 		return info;
+	}
+
+	playCurrentSong(username){
+    	if (this.songStartTime == null) {
+            console.log("\tPausing for: " + username);
+            const options= {
+                url: 'https://api.spotify.com/v1/me/player/pause',
+                method: 'PUT',
+                headers: {
+                    'Authorization' : 'Bearer ' + this.clientTokens[username]
+                }
+            };
+
+            request(options, function(error, response, body){
+
+            });
+		}
+    	else {
+            var timeOffset = Date.now() - this.songStartTime;  //difference is in milliseconds
+            console.log("\tPlaying for: " + username);
+            const options= {
+                url: 'https://api.spotify.com/v1/me/player/play',
+                method: 'PUT',
+                headers: {
+                    'Authorization' : 'Bearer ' + this.clientTokens[username]
+                },
+
+                body: JSON.stringify({
+                    uris: [this.currentSong.songID],
+					position_ms: timeOffset
+                }),
+
+				error : function(error) {
+                	console.log(error);
+				}
+            };
+
+            request(options, function(error, response, body){
+
+            });
+		}
 	}
 }
 
@@ -138,9 +181,10 @@ app.get('/pollqueue', function(req, res){
 	if(listenerMap[req.query.access_token]){
 		room.queueEventEmitter.removeListener('pollqueue', listenerMap[req.query.access_token]);
 	}
-	
+
 	listenerMap[req.query.access_token]= listener;
 	room.queueEventEmitter.once('pollqueue', listener);
+	console.log("Polling for " + req.query.username);
 });
 
 app.post('/addToQueue', function(req, res){
@@ -202,19 +246,23 @@ app.post('/moveToRoom', function(req, res) {
 
 			roomList[req.body.accessToken] = move_to;
 			console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
-			
+            move_to.playCurrentSong(req.body.username);
+
 			const dataObject = {
 				room_name : move_to.title,
 				queueInfo : move_to.makeQueueInfoObject()
-			}
+			};
 			
 			res.json(dataObject);
 			
 			//move the listener
-			var listener= listenerMap[req.query.access_token];
+			var listener= listenerMap[req.body.accessToken];
 			if(listener){
 				current_room.queueEventEmitter.removeListener('pollqueue', listener);
 				move_to.queueEventEmitter.once('pollqueue', listener);
+			}
+			else {
+				console.log("Listener error");
 			}
         }
     }
@@ -226,6 +274,7 @@ app.post('/moveToRoom', function(req, res) {
 function playSong(room) {
 	if(room.queue.length == 0) {
 		room.currentSong = null;
+		room.songStartTime = null;
 		return;
 	}
 	
@@ -242,18 +291,20 @@ function playSong(room) {
 			headers: {
 				'Authorization' : 'Bearer ' + room.clientTokens[i]
 			},
-				
+
 			body: JSON.stringify({
 				uris: [song]
 			})
 		}
-		
+
 		request(options, function(error, response, body){
-			
+
 		});
 	}
 	
 	room.emitQueue();
+
+    room.songStartTime = Date.now();
 	
 	setSongTimeout(room, room.currentSong);
 }
@@ -269,6 +320,7 @@ app.post("/join_room", function(req, res){
 		root.addClient(username, token);
 		roomList[token] = root;
 		console.log("Joined room: " + username);
+		root.playCurrentSong(username);
 		res.json(root.makeQueueInfoObject());
 	}
 	else{
