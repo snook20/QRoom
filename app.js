@@ -8,9 +8,8 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-// var redirect_uri = 'http://localhost:8888/callback/'
-var redirect_uri = "https://qroom.localtunnel.me/callback/"
-// var redirect_uri = "https://qqroom.localtunnel.me/callback/"
+var redirect_uri = 'http://localhost:8888/callback/'
+// var redirect_uri = "https://qroom.localtunnel.me/callback/"
 
 var rootPath= __dirname + '/public';
 
@@ -270,7 +269,7 @@ app.post("/join_room", function(req, res){
 		root.addClient(username, token);
 		roomList[token] = root;
 		console.log("Joined room: " + username);
-		res.sendStatus(200);
+		res.json(root.makeQueueInfoObject());
 	}
 	else{
 		console.log("Falied to join");
