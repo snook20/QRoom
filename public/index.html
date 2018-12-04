@@ -287,10 +287,12 @@
 					url : '/join_room',
 					data : JSON.stringify(dataObject),
 					contentType: 'application/json',
-					success : function(){
+					success : function(queueInfo){
 						//start polling for the queue
 						console.log("joined room");
 						pollQueue();
+						
+						layoutQueue(queueInfo);
 					}
 				});
 			}
