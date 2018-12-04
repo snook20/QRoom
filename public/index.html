@@ -132,7 +132,8 @@
 
 			// Ready
 			player.addListener('ready', ({ device_id }) => {
-			console.log('Ready with Device ID', device_id);
+				console.log('Ready with Device ID', device_id);
+				activatePlayer(device_id);
 			});
 
 			// Not Ready
@@ -250,6 +251,34 @@
 					
                 });
             }
+			
+			function activatePlayer(device_id){
+				console.log("token: " + access_token);
+				const options = {
+					url: "https://api.spotify.com/v1/me/player",
+					method: 'PUT',
+					headers: {
+						'Authorization' : 'Bearer ' + access_token,
+						"Content-Type": "application/json"
+					},
+					
+					data : JSON.stringify({
+						device_ids: [device_id]
+					}),
+					
+					error : function(message){
+						console.log("error");
+						console.log(message);
+					},
+					
+					success : function(body){
+						console.log("success");
+						console.log(body);
+					}
+				}
+				$.ajax(options, function(error, response, body){
+				});
+			}
 
 			if(!access_token){
 				var paramObject= getHashParams();
