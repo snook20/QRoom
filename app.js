@@ -38,9 +38,7 @@ class room {
         this.clientTokens[username] = token;
     }
     removeClient(username) {
-        if (Object.values(this.clientTokens).indexOf(username) != -1) {
-            this.clientTokens.splice(Object.values(this.clientTokens).indexOf(username), 1)
-        }
+        delete this.clientTokens[username];
     }
 	
 	emitQueue(){
@@ -237,7 +235,6 @@ app.get('/getRooms', function(req, res) {
 app.post('/moveToRoom', function(req, res) {
     current_room = roomList[req.body.accessToken];
     move_to = rooms[req.body.moveTo];
-
     if(current_room !== move_to) {
 		//if user name and token are correct
         if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
@@ -312,6 +309,23 @@ function playSong(room) {
 function setSongTimeout(room, songInfo){
 	setTimeout(playSong, songInfo.duration, room)
 }
+
+app.post("/exit_site", function(req, res){
+	var username= req.body.username;
+	var token= req.body.access_token;
+	if(username && token){
+		current_room = roomList[token];
+		//removes user from room and the emitter for the room
+		current_room.removeClient(username);
+		current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[token]);	
+		console.log(username + " left the site");
+	}		
+	else{
+		console.log("Falied to exit");
+		res.sendStatus(451);
+	}
+	
+});
 
 app.post("/join_room", function(req, res){
 	var username= req.body.username;
