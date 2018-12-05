@@ -31,7 +31,7 @@
 		rooms {
 		    float: left;
 		    width: 25%;
-		    height: 500px; /* only for demonstration, should be removed */
+		    height: 500px; 
 		    background: #ccc;
 		    padding: 20px;
 		}
@@ -41,7 +41,7 @@
 		    padding: 20px;
 		    width: 50%;
 		    background-color: #f1f1f1;
-		    height: 500px; /* only for demonstration, should be removed */
+		    height: 500px; 
 		}
 
 		search {
@@ -49,7 +49,7 @@
 		    padding: 20px;
 		    width: 25%;
 		    background-color: #ccc;
-		    height: 500px; /* only for demonstration, should be removed */
+		    height: 500px; 
 		}
 
 		/* Clear floats after the columns */
@@ -113,7 +113,7 @@
 		}
 	</style>
 </head>
-	<body>
+	<body onbeforeunload="quit()">
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
 		</div>
@@ -155,7 +155,7 @@
 			
 		</body>
 	</div>
-
+		</script>
 		
 		<script id = "name_template" type="text/x-handlebars-template">
 				Username : {{display_name}}
@@ -218,6 +218,24 @@
 					hashParams[e[1]] = decodeURIComponent(e[2]);
 				}
 				return hashParams;
+			}
+
+			function quit() {
+				console.log("Test quit function")
+				if(access_token == null){
+					return '';
+				}
+				var dataObject = {
+					username : username,
+					access_token : access_token
+				}
+				$.ajax({
+					type: 'POST',
+					url : '/exit_site',
+					data : JSON.stringify(dataObject),
+					contentType: 'application/json', 
+				});
+    			return '';
 			}
 		
 			function layoutStuff(userObject){
@@ -370,7 +388,8 @@
 					joinRoom(username, access_token);
 					layoutStuff(body.responseJSON);
 				});
-
+				
+				window.focus();
 				$("#login").hide();
 				$("#loggedin").show();
 			}
