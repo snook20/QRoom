@@ -8,12 +8,12 @@ const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 
-// var redirect_uri = 'http://localhost:8888/callback/'
-var redirect_uri = "http://qroom.localtunnel.me/callback/"
+var redirect_uri = 'http://localhost:8888/callback/';
+// var redirect_uri = "http://qroom.localtunnel.me/callback/";
 
 var rootPath= __dirname + '/public';
 
-var app= express()
+var app= express();
 app.use(express.static(rootPath));
 app.use(bodyParser.json());
 
@@ -46,11 +46,20 @@ class room {
 	}
 	
 	makeQueueInfoObject(){
+    	if (this.currentSong == null) {
+    		var duration = null;
+		}
+		else {
+			var duration = this.currentSong.duration;
+		}
+
 		const info = {
 			playing : this.currentSong,
 			queue : this.queue,
-			clientTokens : this.clientTokens
-		}
+			startTime : this.songStartTime,
+			duration : duration,
+            clientTokens : this.clientTokens
+		};
 
 		return info;
 	}
@@ -194,7 +203,7 @@ app.post('/addToQueue', function(req, res){
 		res.sendStatus(420);
 		return;
 	}
-	
+
 	const options= {
 			url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
 			method: 'GET',
@@ -219,8 +228,9 @@ app.post('/addToQueue', function(req, res){
 		if(current_room.queue.length == 1 && current_room.currentSong == null){
 			playSong(current_room);
 		}
-	
-		current_room.emitQueue();
+		else {
+			current_room.emitQueue();
+        }
 	});
 
 });
@@ -232,7 +242,7 @@ app.get('/getRooms', function(req, res) {
 		res.sendStatus(420);
 		return;
 	}
-	
+
 	const dataObject = {
 		available_rooms : rooms,
 		index : Object.keys(rooms).indexOf(req.query.access_token)
@@ -244,13 +254,14 @@ app.get('/getRooms', function(req, res) {
 
 app.post('/moveToRoom', function(req, res) {
     current_room = roomList[req.body.accessToken];
-	
+
 	if(!current_room){
 		res.sendStatus(420);
 		return;
 	}
-	
+
     move_to = rooms[req.body.moveTo];
+
     if(current_room !== move_to) {
 		//if user name and token are correct
         if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
@@ -270,7 +281,7 @@ app.post('/moveToRoom', function(req, res) {
 			
 			//emit queue for the room so all can see the new user
 			move_to.emitQueue();
-			
+
 			//move the listener
 			var listener= listenerMap[req.body.accessToken];
 			if(listener){
@@ -317,11 +328,11 @@ function playSong(room) {
 
 		});
 	}
-	
-	room.emitQueue();
 
     room.songStartTime = Date.now();
-	
+
+	room.emitQueue();
+
 	setSongTimeout(room, room.currentSong);
 }
 
@@ -338,17 +349,17 @@ app.post("/exit_site", function(req, res){
 			res.sendStatus(420);
 			return;
 		}
-		
+
 		//removes user from room and the emitter for the room
 		current_room.removeClient(username);
-		current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[token]);	
+		current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[token]);
 		console.log(username + " left the site");
-	}		
+	}
 	else{
 		console.log("Falied to exit");
 		res.sendStatus(451);
 	}
-	
+
 });
 
 app.post("/join_room", function(req, res){

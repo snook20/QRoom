@@ -21,17 +21,16 @@
 		    background-color: #123;
 		    line-height: 1px;
 		    padding: 10px;
-		    verticle
 		    text-align: left;
 		    font-size: 35px;
 		    color: white;
 		}
 
-		/* Create two columns/boxes that floats next to each other */
+		/* Create three columns/boxes that floats next to each other */
 		rooms {
 		    float: left;
 		    width: 25%;
-		    height: 500px; 
+		    height: 500px;
 		    background: #ccc;
 		    padding: 20px;
 		}
@@ -41,7 +40,17 @@
 		    padding: 20px;
 		    width: 50%;
 		    background-color: #f1f1f1;
-		    height: 500px; 
+		    height: 500px;
+		}
+
+		div.playBar {
+			width: 0;
+			position: relative;
+			bottom: -435px;
+			height: 25px;
+			border-radius: 10px;
+			background-color: forestgreen;
+			/*animation: playBarAnimation infinite linear;*/
 		}
 
 		search {
@@ -49,7 +58,13 @@
 		    padding: 20px;
 		    width: 25%;
 		    background-color: #ccc;
-		    height: 500px; 
+		    height: 500px;
+		}
+
+		/* Standard syntax */
+		@keyframes playBarAnimation {
+			0% {width: 0;}
+			100% {width: 100%;}
 		}
 
 		/* Clear floats after the columns */
@@ -59,22 +74,23 @@
 		    clear: both;
 		}
 
-		/* Responsive layout - makes the two columns/boxes stack on top of each other instead of next to each other, on small screens */
+		/* Responsive layout - makes the three columns/boxes stack on top of each other instead of next to each other, on small screens */
 		@media (max-width: 600px) {
 		    rooms, queue, search {
 		        width: 100%;
 		        height: 10%;
 		    }
 		}
-		
+
 		/* styles for vlume switch*/
 		.switch {
 			position: relative;
+            bottom: 45px;
 			display: inline-block;
-			width: 60px;
-			height: 34px;
+			width: 50px;
+			height: 25px;
 		}
-		
+
 		/* the off color */
 		.slider {
 			position: absolute;
@@ -87,29 +103,29 @@
 			-webkit-transition: .4s;
 			transition: .4s;
 		}
-		
+
 		/* the embedded square*/
 		.slider:before {
 			position: absolute;
 			content: "";
-			height: 26px;
-			width: 26px;
-			left: 4px;
-			bottom: 4px;
+			height: 19px;
+			width: 19px;
+			left: 3px;
+			bottom: 3px;
 			background-color: #f1f1f1;
 			-webkit-transition: .4s;
 			transition: .4s;
 		}
-		
+
 		/* the on color */
 		input:checked + .slider {
 			background-color: #123;
 		}
-		
+
 		input:checked + .slider:before {
-			-webkit-transform: translateX(26px);
-			-ms-transform: translateX(26px);
-			transform: translateX(26px);
+			-webkit-transform: translateX(19px);
+			-ms-transform: translateX(19px);
+			transform: translateX(19px);
 		}
 	</style>
 </head>
@@ -139,12 +155,15 @@
 				</rooms>
 				  
 			    <queue>
+					<div class="playBar" id="songBar">
+                        <label align="bottom" class="switch">
+                            <input id="volumeSwitch" type="checkbox" checked onchange="changeVolume()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
 				  	<center><h3>Queue</h3></center>
 				  	<div id="queue"></div>
-					<label align="bottom" class="switch">
-						<input id="volumeSwitch" type="checkbox" checked onchange="changeVolume()">
-						<span class="slider"></span>
-					</label><br><br>
+
 		   	    </queue>
 				  
 			    <search>
@@ -156,10 +175,9 @@
 					<div id="search_list"></div>	
 				</search>
 			</section>
-			
+
 		</body>
 	</div>
-		</script>
 		
 		<script id = "name_template" type="text/x-handlebars-template">
 				Username : {{display_name}}
@@ -237,11 +255,11 @@
 					type: 'POST',
 					url : '/exit_site',
 					data : JSON.stringify(dataObject),
-					contentType: 'application/json', 
+					contentType: 'application/json',
 				});
     			return '';
 			}
-		
+
 			function layoutStuff(userObject){
 				var source= document.getElementById("name_template").innerHTML;
 				var template= Handlebars.compile(source);
@@ -267,7 +285,7 @@
 					headers: {
 						'Authorization' : 'Bearer ' + access_token
 					},
-				}
+				};
 				
 				$.get(options, function(error, response, body){
 					layoutSearch(body.responseJSON.tracks, 5);
@@ -276,7 +294,7 @@
 			
 			//lays out up to n tracks from the tracks object
 			function layoutSearch(tracks, n){
-				var html = ""
+				var html = "";
 				
 				n= Math.min(n, tracks.items.length);
 				
@@ -340,13 +358,13 @@
 					error : function(message){
 						console.log("failed to switch playback");
 					},
-					
+
 					success : function(body){
 						console.log("switched playback");
 					}
 				});
 			}
-			
+
 			function changeVolume(){
 				var volume = document.getElementById("volumeSwitch").checked ? 100 : 0;
 				$.ajax({
@@ -356,18 +374,18 @@
 						'Authorization' : 'Bearer ' + access_token,
 						"Content-Type": "application/json"
 					},
-					
+
 					data : JSON.stringify({
 						volume_percent : volume
 					}),
-					
+
 					error : function(message){
 						console.log("failed to change volume");
 						console.log(message);
 					},
 					
 					success : function(body){
-						console.log("changed valume");
+						console.log("changed volume");
 					}
 				});
 			}
@@ -385,14 +403,14 @@
 					headers : {
 						"Authorization" : "Bearer " + access_token
 					}
-				}
+				};
 				
 				$.get(options, function(error, response, body){
 				    username = body.responseJSON.display_name;
 					joinRoom(username, access_token);
 					layoutStuff(body.responseJSON);
 				});
-				
+
 				window.focus();
 				$("#login").hide();
 				$("#loggedin").show();
@@ -402,7 +420,7 @@
 				var dataObject = {
 					username : username,
 					access_token : access_token
-				}
+				};
 				
 				$.ajax({
 					type: 'POST',
@@ -431,7 +449,7 @@
 					data: dataObject,
 					success: function(queueInfo){
 						console.log("Recieved queue");
-						layoutQueue(queueInfo)
+						layoutQueue(queueInfo);
 					},
 					error : function(){
 						console.log("Timeout or other failure");
@@ -460,20 +478,32 @@
 			}
 			
 			function layoutQueue(info){
+                // initial songTimer update
+                var el = document.getElementById("songBar");
+                el.style.animation = "none";
+                el.offsetHeight; /* trigger reflow */
+
+                // case: user moves into empty room
 				if(info.playing == null){
 					document.getElementById("queue").innerHTML= "Empty queue - add a song with the search button";
 				}
 				else{
+                    // if songs are playing, display queue
 					var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
 					for(i in info.queue){
 						html+= getSongDiv(info.queue, i) + "<br>";
 					}
-					
 					document.getElementById("queue").innerHTML= html;
+
+                    // update songTimer
+                    var duration = info.duration/1000;
+                    var delayOffset = (Date.now() - info.startTime)/1000;
+                    el.style.animation = "playBarAnimation " +
+                        duration + "s linear -" + delayOffset + "s";
 				}
-				
-				//layout memebers
-				console.log("calling layoutmembers");
+
+				//layout members
+				console.log("calling layoutMembers");
 				layoutMembers(info.clientTokens);
 			}
 			
@@ -483,10 +513,10 @@
 				for(memeber in memberObject){
 					html+= memeber + "<br>";
 				}
-				
+
 				document.getElementById("users").innerHTML= html;
 			}
-			
+
 			function getSongDiv(queue, i){
 				song= queue[i];
 				var info= song.artist + " : " + song.title;
