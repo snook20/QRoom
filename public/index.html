@@ -132,6 +132,10 @@
 	  	   			<center><h3>Rooms</h3></center>
 				   	<button id="showRooms">Show rooms</button>
 				   	<div id="room_list"></div>
+					<br>
+					<div>Current members::(</div>
+					<div id="users"></div>
+					<div>);</div>
 				</rooms>
 				  
 			    <queue>
@@ -188,7 +192,7 @@
 
 			// Not Ready
 			player.addListener('not_ready', ({ device_id }) => {
-			console.log('Device ID has gone offline', device_id);
+				console.log('Device ID has gone offline', device_id);
 			});
 
 			// Connect to the player!
@@ -458,14 +462,29 @@
 			function layoutQueue(info){
 				if(info.playing == null){
 					document.getElementById("queue").innerHTML= "Empty queue - add a song with the search button";
-					return;
 				}
-				var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
-				for(i in info.queue){
-					html+= getSongDiv(info.queue, i) + "<br>";
+				else{
+					var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
+					for(i in info.queue){
+						html+= getSongDiv(info.queue, i) + "<br>";
+					}
+					
+					document.getElementById("queue").innerHTML= html;
 				}
 				
-				document.getElementById("queue").innerHTML= html;
+				//layout memebers
+				console.log("calling layoutmembers");
+				layoutMembers(info.clientTokens);
+			}
+			
+			function layoutMembers(memberObject){
+				console.log("member obj: " +memberObject);
+				var html= "";
+				for(memeber in memberObject){
+					html+= memeber + "<br>";
+				}
+				
+				document.getElementById("users").innerHTML= html;
 			}
 			
 			function getSongDiv(queue, i){
