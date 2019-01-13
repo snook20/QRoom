@@ -5,7 +5,7 @@
 	<title>QRoom</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
+
 	<style>
 
 		* {
@@ -17,7 +17,7 @@
 		}
 
 		/* Style the header */
-		header {
+		div.header {
 		    background-color: #123;
 		    line-height: 1px;
 		    padding: 10px;
@@ -27,7 +27,7 @@
 		}
 
 		/* Create three columns/boxes that floats next to each other */
-		rooms {
+		div.rooms {
 		    float: left;
 		    width: 25%;
 		    height: 500px;
@@ -35,7 +35,7 @@
 		    padding: 20px;
 		}
 
-		queue {
+		div.queue {
 		    float: left;
 		    padding: 20px;
 		    width: 50%;
@@ -53,7 +53,7 @@
 			/*animation: playBarAnimation infinite linear;*/
 		}
 
-		search {
+		div.search {
 		    float: left;
 		    padding: 20px;
 		    width: 25%;
@@ -133,56 +133,24 @@
 		<div id = "login" >
 			<a href = "/login">Click to Login with Spotify</a>
 		</div>
-			
+
 		<div id = "loggedin" style="display:none">
-			
-		<body>
-			<header>
-				<h1>QRoom</h1>
-				<h6><div id="name"></div></h6>
-				<h6><div id="roomLabel">root</div></h6>
-			</header>
 
-			<section>
-				<rooms>
-	  	   			<center><h3>Rooms</h3></center>
-				   	<button id="showRooms">Show rooms</button>
-				   	<div id="room_list"></div>
-					<br>
-					<div>Current members::(</div>
-					<div id="users"></div>
-					<div>);</div>
-				</rooms>
-				  
-			    <queue>
-					<div class="playBar" id="songBar">
-                        <label align="bottom" class="switch">
-                            <input id="volumeSwitch" type="checkbox" checked onchange="changeVolume()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-				  	<center><h3>Queue</h3></center>
-				  	<div id="queue"></div>
+		<div id="react_dom"></div>
 
-		   	    </queue>
-				  
-			    <search>
-				    <center><h3>Search</h3></center>
-				    <form id="songInputForm" method="get">
-						Song search: <input type="text" name="song_search" value="Sunflower"><br>
-						<input type="submit" style="display:none"/>
-					</form>
-					<div id="search_list"></div>	
-				</search>
-			</section>
-
-		</body>
 	</div>
-		
+
+		<!-- Load React. -->
+		<!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+		<script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+		<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+
+		<!-- Load our React component. -->
+		<script src="react.js"></script>
 		<script id = "name_template" type="text/x-handlebars-template">
 				Username : {{display_name}}
 		</script>
-		
+
 		<script src="https://sdk.scdn.co/spotify-player.js"></script>
 		<script>
 			window.onSpotifyWebPlaybackSDKReady = () => {
@@ -216,9 +184,9 @@
 			// Connect to the player!
 			player.connect();
 		};
-			
+
 		</script>
-		
+
 		<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
@@ -229,7 +197,7 @@
 			$("#loggedin").hide();
 			/**
 				parses url hash data into object
-				
+
 				copied from spotify web authorization example
 			*/
 			function getHashParams() {
@@ -263,10 +231,10 @@
 			function layoutStuff(userObject){
 				var source= document.getElementById("name_template").innerHTML;
 				var template= Handlebars.compile(source);
-				
+
 				document.getElementById("name").innerHTML= template(userObject);
 			}
-			
+
 			document.getElementById("showRooms").onclick = function(){showRooms()};
 
             // getting songs
@@ -276,7 +244,7 @@
                 //this should prevent page reloading
                 return false;
 			});
-			
+
 			function searchSong(title){
 				title.replace(/ /g, "+");
 				const options = {
@@ -286,29 +254,29 @@
 						'Authorization' : 'Bearer ' + access_token
 					},
 				};
-				
+
 				$.get(options, function(error, response, body){
 					layoutSearch(body.responseJSON.tracks, 5);
 				});
 			}
-			
+
 			//lays out up to n tracks from the tracks object
 			function layoutSearch(tracks, n){
 				var html = "";
-				
+
 				n= Math.min(n, tracks.items.length);
-				
+
 				for(i= 0; i < n; i++){
 					html+= resultButton(tracks.items[i]) + "<br>";
 				}
-				
+
 				document.getElementById("search_list").innerHTML= html;
 			}
-			
+
 			function resultButton(track){
 				return '<button onclick= "playSongCode(\''+track.uri+'\')">'+track.artists[0].name+' : '+track.name+'</button>'
 			}
-			
+
 			function playSongCode(songCode){
 				var dataObject = {
                     accessToken : access_token,
@@ -338,10 +306,10 @@
                     layoutRooms(body.responseJSON.available_rooms, body.responseJSON.index);
                     //since body.responseJSON is an array of rooms, save list to the client
                     room_list = body.responseJSON.available_rooms;
-					
+
                 });
             }
-			
+
 			function activatePlayer(device_id){
 				$.ajax({
 					url: "https://api.spotify.com/v1/me/player",
@@ -350,11 +318,11 @@
 						'Authorization' : 'Bearer ' + access_token,
 						"Content-Type": "application/json"
 					},
-					
+
 					data : JSON.stringify({
 						device_ids: [device_id]
 					}),
-					
+
 					error : function(message){
 						console.log("failed to switch playback");
 					},
@@ -383,7 +351,7 @@
 						console.log("failed to change volume");
 						console.log(message);
 					},
-					
+
 					success : function(body){
 						console.log("changed volume");
 					}
@@ -394,7 +362,7 @@
 				var paramObject= getHashParams();
 				access_token= paramObject.token;
 			}
-			
+
 			//if we have an access token, get our info and display it
 			if(access_token){
 				const options= {
@@ -404,7 +372,7 @@
 						"Authorization" : "Bearer " + access_token
 					}
 				};
-				
+
 				$.get(options, function(error, response, body){
 				    username = body.responseJSON.display_name;
 					joinRoom(username, access_token);
@@ -415,13 +383,13 @@
 				$("#login").hide();
 				$("#loggedin").show();
 			}
-			
+
 			function joinRoom(username, access_token){
 				var dataObject = {
 					username : username,
 					access_token : access_token
 				};
-				
+
 				$.ajax({
 					type: 'POST',
 					url : '/join_room',
@@ -431,7 +399,7 @@
 						//start polling for the queue
 						console.log("joined room");
 						pollQueue();
-						
+
 						layoutQueue(queueInfo);
 					}
 				});
@@ -442,10 +410,10 @@
 					access_token : access_token,
 					username : username
 				}
-				
+
 				$.ajax({
 					method: 'GET',
-					url: '/pollqueue', 
+					url: '/pollqueue',
 					data: dataObject,
 					success: function(queueInfo){
 						console.log("Recieved queue");
@@ -462,7 +430,7 @@
 					timeout: 600000
 			  })
 			}
-			
+
 			function getQueue(){
 				const dataObject = {
 					access_token : access_token,
@@ -476,7 +444,7 @@
 					layoutQueue(queueInfo);
 				});
 			}
-			
+
 			function layoutQueue(info){
                 // initial songTimer update
                 var el = document.getElementById("songBar");
@@ -506,7 +474,7 @@
 				console.log("calling layoutMembers");
 				layoutMembers(info.clientTokens);
 			}
-			
+
 			function layoutMembers(memberObject){
 				console.log("member obj: " +memberObject);
 				var html= "";
