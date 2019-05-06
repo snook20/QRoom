@@ -1,7 +1,9 @@
 {
 	"author": "JARSHT",
 	"name": "QRoom",
-	"start": "node app.js",
+	"scripts" : {
+		"start": "node app.js"
+	},
 	"dependencies": {
 		"body-parser": "^1.18.3",
 		"events": "^3.0.0",

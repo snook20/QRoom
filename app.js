@@ -1,8 +1,7 @@
-var express= require("express")
-var request= require("request")
-var querystring= require("querystring")
-var EventEmitter = require("events").EventEmitter
-var bodyParser = require("body-parser")
+var express= require("express");
+var request= require("request");
+var querystring= require("querystring");
+var bodyParser = require("body-parser");
 
 const clientInfo = require('./clientIds.js');
 var client_id = clientInfo.client_id;
@@ -11,100 +10,12 @@ var client_secret = clientInfo.client_secret;
 var redirect_uri = 'http://localhost:8888/callback/';
 // var redirect_uri = "http://qroom.localtunnel.me/callback/";
 
-var rootPath= __dirname + '/public';
-
 var app= express();
-app.use(express.static(rootPath));
+app.use(express.static('./public'));
 app.use(bodyParser.json());
 
-
-class room {
-    constructor(roomName) {
-        this.title = roomName;
-        //key: username, value: token
-        this.clientTokens = {};
-        //song queue
-        this.queue = [];
-        //song currently playing
-        this.currentSong = null;
-        //when song started to play
-		this.songStartTime = null;
-		
-		//queue emitter
-		this.queueEventEmitter = new EventEmitter();
-		this.queueEventEmitter.setMaxListeners(10);
-    }
-    addClient(username, token) {
-        this.clientTokens[username] = token;
-    }
-    removeClient(username) {
-        delete this.clientTokens[username];
-    }
-	
-	emitQueue(){
-		this.queueEventEmitter.emit('pollqueue', this.makeQueueInfoObject());
-	}
-	
-	makeQueueInfoObject(){
-    	if (this.currentSong == null) {
-    		var duration = null;
-		}
-		else {
-			var duration = this.currentSong.duration;
-		}
-
-		const info = {
-			playing : this.currentSong,
-			queue : this.queue,
-			startTime : this.songStartTime,
-			duration : duration,
-            clientTokens : this.clientTokens
-		};
-
-		return info;
-	}
-
-	playCurrentSong(username){
-    	if (this.songStartTime == null) {
-            console.log("\tPausing for: " + username);
-            const options= {
-                url: 'https://api.spotify.com/v1/me/player/pause',
-                method: 'PUT',
-                headers: {
-                    'Authorization' : 'Bearer ' + this.clientTokens[username]
-                }
-            };
-
-            request(options, function(error, response, body){
-
-            });
-		}
-    	else {
-            var timeOffset = Date.now() - this.songStartTime;  //difference is in milliseconds
-            console.log("\tPlaying for: " + username);
-            const options= {
-                url: 'https://api.spotify.com/v1/me/player/play',
-                method: 'PUT',
-                headers: {
-                    'Authorization' : 'Bearer ' + this.clientTokens[username]
-                },
-
-                body: JSON.stringify({
-                    uris: [this.currentSong.songID],
-					position_ms: timeOffset
-                }),
-
-				error : function(error) {
-                	console.log(error);
-				}
-            };
-
-            request(options, function(error, response, body){
-
-            });
-		}
-	}
-}
+//require the room class
+var room = require('./server/room.js');
 
 var root = new room("root");
 var room1 = new room("[1]");
@@ -123,23 +34,29 @@ var roomList = {};
 var listenerMap = {};
 
 app.get("/poop", function(req, res){
-	res.send("Poop")
+	res.send("Poop");
 });
 
+/* handle a client request to login with spotify
+ */
 app.get('/login', function(req, res){
 	var scope = 'user-read-playback-state user-read-private user-read-email streaming user-read-birthdate user-modify-playback-state';
-	var options = querystring.stringify(
-					{
-						response_type: 'code',
-						client_id: client_id,
-						scope: scope,
-						redirect_uri: redirect_uri,
-					});
-					
-	res.redirect('https://accounts.spotify.com/authorize?' + options)
+	var options = querystring.stringify({
+		response_type: 'code',
+		client_id: client_id,
+		scope: scope,
+		//spotify authorization will give a code to use to get a client token
+		//redirect that code to our callback
+		redirect_uri: redirect_uri,
+	});
+	
+	//redirect to the spotify login
+	res.redirect('https://accounts.spotify.com/authorize?' + options);
 });
 
 app.get('/callback', function(req, res){
+	//get authorization code from the redirect
+	//null if no code found
 	var code = req.query.code || null;
 	
 	var authOptions = {
@@ -154,7 +71,9 @@ app.get('/callback', function(req, res){
       },
       json: true
     };
-		
+	
+	//using the authorization code, get a client id
+	//then send that id to the client
 	request.post(authOptions, function(error, responce, body){
 		access_token= body.access_token;
 		
@@ -173,6 +92,8 @@ app.get("/getqueue", function(req, res){
 	res.json(room.makeQueueInfoObject());
 });
 
+/* handle a poll request for the queue from a user
+ */
 app.get('/pollqueue', function(req, res){
 	room = roomList[req.query.access_token];
 	
@@ -205,10 +126,10 @@ app.post('/addToQueue', function(req, res){
 	}
 
 	const options= {
-			url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
-			method: 'GET',
-			headers: {
-				'Authorization' : 'Bearer ' + req.body.accessToken
+		url: 'https://api.spotify.com/v1/tracks/'+req.body.songCode.substring(14), //removes spotify:track: from song
+		method: 'GET',
+		headers: {
+			'Authorization' : 'Bearer ' + req.body.accessToken
 		}			
 	};
 
@@ -337,7 +258,7 @@ function playSong(room) {
 }
 
 function setSongTimeout(room, songInfo){
-	setTimeout(playSong, songInfo.duration, room)
+	setTimeout(playSong, songInfo.duration, room);
 }
 
 app.post("/exit_site", function(req, res){
@@ -382,7 +303,8 @@ function sendAccessToken(res, token){
 	var string= querystring.stringify({
 		token : token
 	});
-	return res.redirect("/#" + string)
+	
+	res.redirect("/#" + string);
 }
 
 console.log("Hit up 8888");
