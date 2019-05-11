@@ -110,6 +110,7 @@ function showRooms() {
 	}
 
 	$.get(options, function(error, response, body){
+		console.log(body.responseJSON);
 		layoutRooms(body.responseJSON.available_rooms, body.responseJSON.index);
 		//since body.responseJSON is an array of rooms, save list to the client
 		room_list = body.responseJSON.available_rooms;

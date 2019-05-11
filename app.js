@@ -1,3 +1,5 @@
+const debug_output= true;
+
 var express= require("express");
 var request= require("request");
 var querystring= require("querystring");
@@ -33,11 +35,14 @@ var roomList = {};
 //this map makes sure we only have one listener per user
 var listenerMap = {};
 
+/**
+ * handle a request for the user to poop
+ */
 app.get("/poop", function(req, res){
 	res.send("Poop");
 });
 
-/* handle a client request to login with spotify
+/** handle a client request to login with spotify
  */
 app.get('/login', function(req, res){
 	var scope = 'user-read-playback-state user-read-private user-read-email streaming user-read-birthdate user-modify-playback-state';
@@ -54,6 +59,13 @@ app.get('/login', function(req, res){
 	res.redirect('https://accounts.spotify.com/authorize?' + options);
 });
 
+/**
+ * Handle a callback from oauth with an authentication code
+ * Expected req.query:
+ *	{
+ *		code : the authentication code
+ *	}
+ */
 app.get('/callback', function(req, res){
 	//get authorization code from the redirect
 	//null if no code found
@@ -81,6 +93,15 @@ app.get('/callback', function(req, res){
 	});
 });
 
+/**
+ * Handle a request for the current queue, respond immediatly
+ * Expected req.body:
+ * 	{
+ *		access_token : the user's access_token
+ *	}
+ *
+ * Respond with a json of the current queue
+ */
 app.get("/getqueue", function(req, res){
 	room = roomList[req.query.access_token];
 	
@@ -92,7 +113,18 @@ app.get("/getqueue", function(req, res){
 	res.json(room.makeQueueInfoObject());
 });
 
-/* handle a poll request for the queue from a user
+/**
+ * Handle a poll request for an updated queue
+ * the request will be responded to only when there is
+ * an update in the user's current queue
+ *
+ * Expected req.body:
+ * 	{
+ *		username : the user's username,
+ *		access_token : the user's access_token
+ *	}
+ *
+ * Once there is an update to the queue, send the json of the current queue
  */
 app.get('/pollqueue', function(req, res){
 	room = roomList[req.query.access_token];
@@ -102,20 +134,33 @@ app.get('/pollqueue', function(req, res){
 		return;
 	}
 	
+	//function to execute when a queue update occurs,
+	//send the given queueInfo object to the polling user
 	var listener = function(queueInfo){
-		console.log("Sending queue to " + req.query.username);
+		debug_log("Sending queue to " + req.query.username);
 		res.json(queueInfo);
 	};
 	
+	//if this user already has a registered listener, remove it
 	if(listenerMap[req.query.access_token]){
 		room.queueEventEmitter.removeListener('pollqueue', listenerMap[req.query.access_token]);
 	}
-
+	
 	listenerMap[req.query.access_token]= listener;
 	room.queueEventEmitter.once('pollqueue', listener);
-	console.log("Polling for " + req.query.username);
+	debug_log("Polling for " + req.query.username);
 });
 
+/**
+ * Handle a request for a user to add a song to the queue
+ * Expected req.body:
+ * 	{
+ *		songCode : the spotify code for the requested song,
+ *		accessToken : the user's access token
+ *	}
+ *
+ * Remove the user from the website
+ */
 app.post('/addToQueue', function(req, res){
 
     current_room = roomList[req.body.accessToken];
@@ -144,7 +189,7 @@ app.post('/addToQueue', function(req, res){
 		};
 
 		current_room.queue.push(songInfo);
-		console.log("Song Added to queue: "+songInfo.title + " in room " + current_room.title);
+		debug_log("Song Added to queue: "+songInfo.title + " in room " + current_room.title);
 
 		if(current_room.queue.length == 1 && current_room.currentSong == null){
 			playSong(current_room);
@@ -156,7 +201,22 @@ app.post('/addToQueue', function(req, res){
 
 });
 
+/**
+ * Handle a request for the current available rooms
+ * Expected req.body:
+ * 	{
+ *		username : the user's username,
+ *		access_token : the user's access_token
+ *	}
+ *
+ * Respond with a json containing:
+ *	{
+ *		available_rooms : an array of room objects,
+ *		index : the index of the user's current room
+ *	}
+ */
 app.get('/getRooms', function(req, res) {
+	console.log("getting called");
     current_room = roomList[req.query.access_token];
     
 	if(!room){
@@ -173,6 +233,17 @@ app.get('/getRooms', function(req, res) {
 
 });
 
+/**
+ * Handle a request for a user to switch rooms
+ * Expected req.body:
+ * 	{
+ *		username : the user's username,
+ *		accessToken : the user's access_token,
+ *		moveTo : the index of the room the user wishes to move to
+ *	}
+ *
+ * Move the user to 
+ */
 app.post('/moveToRoom', function(req, res) {
     current_room = roomList[req.body.accessToken];
 
@@ -186,11 +257,13 @@ app.post('/moveToRoom', function(req, res) {
     if(current_room !== move_to) {
 		//if user name and token are correct
         if(current_room.clientTokens[req.body.username] == req.body.accessToken) {
+			
+			//remove client from old room, and add them to the new room
             current_room.removeClient(req.body.username);
             move_to.addClient(req.body.username, req.body.accessToken);
 
 			roomList[req.body.accessToken] = move_to;
-			console.log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
+			debug_log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
             move_to.playCurrentSong(req.body.username);
 
 			const dataObject = {
@@ -210,16 +283,20 @@ app.post('/moveToRoom', function(req, res) {
 				move_to.queueEventEmitter.once('pollqueue', listener);
 			}
 			else {
-				console.log("Listener error");
+				debug_log("Listener error");
 			}
         }
     }
 	else{
-		console.log(req.body.username + " already in room " + current_room.title);
+		debug_log(req.body.username + " already in room " + current_room.title);
 	}
 });
 
+/**
+ * start playing the next song in the given room
+ */
 function playSong(room) {
+	//if the queue is empty, don't play a song
 	if(room.queue.length == 0) {
 		room.currentSong = null;
 		room.songStartTime = null;
@@ -230,9 +307,9 @@ function playSong(room) {
 	room.currentSong = room.queue.shift();
 	var song = room.currentSong.songID;
 
-	console.log("Playing song: "+room.currentSong.title);
+	debug_log("Playing song: "+room.currentSong.title);
 	for( i in room.clientTokens){
-		console.log("\tPlaying for: " + i);
+		debug_log("\tPlaying for: " + i);
 		const options= {
 			url: 'https://api.spotify.com/v1/me/player/play',
 			method: 'PUT',
@@ -257,10 +334,25 @@ function playSong(room) {
 	setSongTimeout(room, room.currentSong);
 }
 
+/**
+ * start the timer for when the next song should be played
+ * @param room the room to play start playing in
+ * @param songInfo the song info for the song that just started playing in room
+ */
 function setSongTimeout(room, songInfo){
 	setTimeout(playSong, songInfo.duration, room);
 }
 
+/**
+ * Handle a request for a user to exit the website
+ * Expected req.body:
+ * 	{
+ *		username : the user's username,
+ *		access_token : the user's access_token
+ *	}
+ *
+ * Remove the user from the website
+ */
 app.post("/exit_site", function(req, res){
 	var username= req.body.username;
 	var token= req.body.access_token;
@@ -274,37 +366,64 @@ app.post("/exit_site", function(req, res){
 		//removes user from room and the emitter for the room
 		current_room.removeClient(username);
 		current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[token]);
-		console.log(username + " left the site");
+		debug_log(username + " left the site");
 	}
 	else{
-		console.log("Falied to exit");
+		debug_log("Falied to exit");
 		res.sendStatus(451);
 	}
 
 });
 
+/**
+ * Handle a request for a user to join the root room
+ * Expected req.body:
+ * 	{
+ *		username : the user's username,
+ *		access_token : the user's access_token
+ *	}
+ *
+ * Add the user to the root room and respond with the root queue
+ */
 app.post("/join_room", function(req, res){
 	var username= req.body.username;
 	var token= req.body.access_token;
+	
 	if(username && token){
 		root.addClient(username, token);
 		roomList[token] = root;
-		console.log("Joined room: " + username);
+		debug_log("Joined room: " + username);
 		root.playCurrentSong(username);
+		
+		//send the queue for the room they just joined -- root
 		res.json(root.makeQueueInfoObject());
 	}
 	else{
-		console.log("Falied to join");
+		debug_log("Falied to join");
 		res.sendStatus(451);
 	}
 });
 
+/**
+ * redirect the given responce object (presumably a user)
+ * to the url with their access token as a querystring
+ */
 function sendAccessToken(res, token){
 	var string= querystring.stringify({
 		token : token
 	});
 	
 	res.redirect("/#" + string);
+}
+
+/**
+ * log the given string to the console if the debug
+ * setting is true
+ */
+function debug_log(string){
+	if(debug_output){
+		console.log(string);
+	}
 }
 
 console.log("Hit up 8888");
