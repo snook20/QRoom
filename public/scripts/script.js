@@ -28,7 +28,7 @@ function quit() {
 	}
 	$.ajax({
 		type: 'POST',
-		url : '/exit_site',
+		url : '/from_room/exit_site',
 		data : JSON.stringify(dataObject),
 		contentType: 'application/json',
 	});
@@ -86,13 +86,13 @@ function resultButton(track){
 
 function playSongCode(songCode){
 	var dataObject = {
-		accessToken : access_token,
+		access_token : access_token,
 		songCode : songCode
 	}
 
 	$.ajax({
 		type: 'POST',
-		url : '/addToQueue',
+		url : '/from_room/addToQueue',
 		data : JSON.stringify(dataObject),
 		contentType: 'application/json',
 	});
@@ -104,7 +104,7 @@ function showRooms() {
 		username: username
 	}
 	const options= {
-		url: '/getRooms',
+		url: '/from_room/getRooms',
 		method: 'GET',
 		data: dataObject
 	}
@@ -221,7 +221,7 @@ function pollQueue(){
 	
 	$.ajax({
 		method: 'GET',
-		url: '/pollqueue', 
+		url: '/from_room/pollqueue', 
 		data: dataObject,
 		success: function(queueInfo){
 			console.log("Recieved queue");
@@ -244,7 +244,7 @@ function getQueue(){
 		access_token : access_token,
 	}
 	const options = {
-		url : '/getqueue',
+		url : '/from_room/getqueue',
 		type : 'GET',
 		data : dataObject
 	}
@@ -318,12 +318,12 @@ function switchRoom(roomIndex) {
 	var room = room_list[roomIndex];
 	var dataObject = {
 		username : username,
-		accessToken : access_token,
+		access_token : access_token,
 		// roomIndex is used because there was problems moving a room object from JS to HTML and back to JS
 		moveTo : roomIndex
 	};
 	$.ajax({
-		url : '/moveToRoom',
+		url : '/from_room/moveToRoom',
 		type : 'POST',
 		data : JSON.stringify(dataObject),
 		contentType: 'application/json',
@@ -333,4 +333,8 @@ function switchRoom(roomIndex) {
 			layoutQueue(data.queueInfo);
 		}
 	});
+}
+
+function from_room_request(url, body, callback){
+	
 }
