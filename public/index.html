@@ -11,13 +11,23 @@
 		
 	</head>
 	<body onbeforeunload="quit()">
-		<div id = "login" >
+
+	
+		<!-- Display the login page before the user has logged in with spotify -->
+		<div id = "login_page" >
 			<a href = "/login">Click to Login with Spotify</a>
+			
+			
 		</div>
+		
+		<!-- Display the lobby page once a user has logged in, but before they join a room -->
+		<div id = "lobby">
 			
-		<div id = "loggedin" style="display:none">
-			
-		<body>
+		</div>
+		
+		<!-- Display the room div when the user is in a room -->
+		<div id = "room" style = "display:none">
+
 			<header>
 				<h1>QRoom</h1>
 				<h6><div id="name"></div></h6>
@@ -30,9 +40,8 @@
 				   	<button id="showRooms">Show rooms</button>
 				   	<div id="room_list"></div>
 					<br>
-					<div>Current members::(</div>
+					<div>Current members:</div>
 					<div id="users"></div>
-					<div>);</div>
 				</rooms>
 				  
 			    <queue>
@@ -56,21 +65,27 @@
 					<div id="search_list"></div>	
 				</search>
 			</section>
-
-		</body>
-	</div>
+			
+			
+			
+		</div><!-- end room div -->
 		
-		<script id = "name_template" type="text/x-handlebars-template">
-				Username : {{display_name}}
-		</script>
+		<!-- Load jQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<!-- load global scripts -->
+		<script src = "./scripts/global.js"></script>
+		
+		<script src = "./scripts/login.js"></script>
+		
+		<script src = "./scripts/lobby.js"></script>
 		
 		<!-- web player scripts -->
 		<script src="https://sdk.scdn.co/spotify-player.js"></script>
 		<script src="./scripts/web_player.js"></script>
 		
-		<script src="//cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0-alpha.1/handlebars.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-
-		<script src="./scripts/script.js"></script>
+		<script src = "./scripts/room.js"></script>
+		<!-- <script src="./scripts/script.js"></script> -->
+		
 	</body>
 </html>

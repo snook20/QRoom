@@ -102,9 +102,10 @@ app.get('/login', function(req, res){
 		scope: scope,
 		//spotify authorization will give a code to use to get a client token
 		//redirect that code to our callback
-		redirect_uri: redirect_uri,
+		redirect_uri: redirect_uri
 	});
 	
+	res.set('Access-Control-Allow-Origin','*');
 	//redirect to the spotify login
 	res.redirect('https://accounts.spotify.com/authorize?' + options);
 });

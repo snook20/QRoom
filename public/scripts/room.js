@@ -1,22 +1,6 @@
-var username = null;
-var access_token = null;
-var room_list = null;
-$("#loggedin").hide();
 /**
-	parses url hash data into object
-	
-	copied from spotify web authorization example
-*/
-function getHashParams() {
-	var hashParams = {};
-	var e, r = /([^&;=]+)=?([^&;]*)/g,
-		q = window.location.hash.substring(1);
-	while ( e = r.exec(q)) {
-		hashParams[e[1]] = decodeURIComponent(e[2]);
-	}
-	return hashParams;
-}
-
+ * send request to be removed from the site
+ */
 function quit() {
 	console.log("Test quit function")
 	if(access_token == null){
@@ -35,13 +19,6 @@ function quit() {
 	return '';
 }
 
-function layoutStuff(userObject){
-	var source= document.getElementById("name_template").innerHTML;
-	var template= Handlebars.compile(source);
-	
-	document.getElementById("name").innerHTML= template(userObject);
-}
-
 document.getElementById("showRooms").onclick = function(){showRooms()};
 
 // getting songs
@@ -52,6 +29,10 @@ $('#songInputForm').submit(function() {
 	return false;
 });
 
+/**
+ * search for a song from the given string
+ * call layout search with the results
+ */
 function searchSong(title){
 	title.replace(/ /g, "+");
 	const options = {
@@ -80,10 +61,18 @@ function layoutSearch(tracks, n){
 	document.getElementById("search_list").innerHTML= html;
 }
 
+/**
+ * create a button from the given track code
+ * this button will call playSongCode with the given track id
+ */
 function resultButton(track){
 	return '<button onclick= "playSongCode(\''+track.uri+'\')">'+track.artists[0].name+' : '+track.name+'</button>'
 }
 
+/**
+ * request to add the song with the given songCode to the
+ * current room's queue
+ */
 function playSongCode(songCode){
 	var dataObject = {
 		access_token : access_token,
@@ -98,6 +87,9 @@ function playSongCode(songCode){
 	});
 }
 
+/**
+ * get the currently registered rooms and lay them out
+ */
 function showRooms() {
 	const dataObject = {
 		access_token : access_token,
@@ -118,6 +110,9 @@ function showRooms() {
 	});
 }
 
+/**
+ * switch playback to the web player
+ */
 function activatePlayer(device_id){
 	$.ajax({
 		url: "https://api.spotify.com/v1/me/player",
@@ -141,6 +136,9 @@ function activatePlayer(device_id){
 	});
 }
 
+/**
+ * toggle mute
+ */
 function changeVolume(){
 	var volume = document.getElementById("volumeSwitch").checked ? 100 : 0;
 	$.ajax({
@@ -166,53 +164,13 @@ function changeVolume(){
 	});
 }
 
-if(!access_token){
-	var paramObject= getHashParams();
-	access_token= paramObject.token;
-}
-
-//if we have an access token, get our info and display it
-if(access_token){
-	const options= {
-		url : "https://api.spotify.com/v1/me",
-		method : "GET",
-		headers : {
-			"Authorization" : "Bearer " + access_token
-		}
-	};
-	
-	$.get(options, function(error, response, body){
-		username = body.responseJSON.display_name;
-		joinRoom(username, access_token);
-		layoutStuff(body.responseJSON);
-	});
-
-	window.focus();
-	$("#login").hide();
-	$("#loggedin").show();
-}
-
-function joinRoom(username, access_token){
-	var dataObject = {
-		username : username,
-		access_token : access_token
-	};
-	
-	$.ajax({
-		type: 'POST',
-		url : '/join_room',
-		data : JSON.stringify(dataObject),
-		contentType: 'application/json',
-		success : function(queueInfo){
-			//start polling for the queue
-			console.log("joined room");
-			pollQueue();
-			
-			layoutQueue(queueInfo);
-		}
-	});
-}
-
+/**
+ * send a long poll get request for the queue
+ * this should only be called once, since it will repeatedly
+ * poll when a responce comes in
+ *
+ * when the poll is responded to, this will layout the current queue
+ */
 function pollQueue(){
 	const dataObject = {
 		access_token : access_token,
@@ -236,9 +194,12 @@ function pollQueue(){
 			pollQueue()
 		},
 		timeout: 600000
-  })
+	})
 }
 
+/**
+ * get the current queue and lay it out
+ */
 function getQueue(){
 	const dataObject = {
 		access_token : access_token,
@@ -253,6 +214,9 @@ function getQueue(){
 	});
 }
 
+/**
+ * layout the given queue info object
+ */
 function layoutQueue(info){
 	// initial songTimer update
 	var el = document.getElementById("songBar");
@@ -283,6 +247,9 @@ function layoutQueue(info){
 	layoutMembers(info.clientTokens);
 }
 
+/**
+ * layout the given array of members
+ */
 function layoutMembers(memberObject){
 	console.log("member obj: " +memberObject);
 	var html= "";
@@ -293,6 +260,9 @@ function layoutMembers(memberObject){
 	document.getElementById("users").innerHTML= html;
 }
 
+/**
+ * create a div representing the song at queue[i]
+ */
 function getSongDiv(queue, i){
 	song= queue[i];
 	var info= song.artist + " : " + song.title;
@@ -300,6 +270,10 @@ function getSongDiv(queue, i){
 	return "<div>" + index + ") " + info + "</div>";
 }
 
+/**
+ * layout the rooms, given the list of rooms
+ * and the index of the room we are currently in
+ */
 function layoutRooms(rooms, currentIndex) {
 	var html = "";
 	for (i in rooms) {
@@ -313,6 +287,9 @@ function layoutRooms(rooms, currentIndex) {
 	document.getElementById("room_list").innerHTML = html;
 }
 
+/**
+ * send a request to switch rooms
+ */
 function switchRoom(roomIndex) {
 	console.log(room_list[roomIndex]);
 	var room = room_list[roomIndex];
@@ -333,8 +310,4 @@ function switchRoom(roomIndex) {
 			layoutQueue(data.queueInfo);
 		}
 	});
-}
-
-function from_room_request(url, body, callback){
-	
 }
