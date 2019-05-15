@@ -1,5 +1,6 @@
 /* Status Codes:
  * 420 - not in a room
+ * 421 - already in a room
  * 432 - unexpected request method
  * 451 - missing username or access token
  */
@@ -23,7 +24,7 @@ app.use(express.static('./public'));
 app.use(bodyParser.json());
 
 //require the room class
-var room = require('./server/room.js');
+var room = require('./server/Room.js');
 
 var root = new room("root");
 var room1 = new room("[1]");
@@ -42,6 +43,24 @@ var roomList = {};
 var listenerMap = {};
 
 /**
+ * returns the body from the given request object
+ * in particular, return req.body for POST
+ *				  return req.query for GET
+ *				  return null otherwise
+ */
+function getBody(req){
+	//for gets, the body is query, for posts it is in body
+	switch(req.method){
+		case 'POST':
+			return req.body;
+		case 'GET':
+			return req.query;
+		default:
+			return null;
+	}
+}
+
+/**
  * if the user requests to do something which they should already be in
  * some room to do, the url will begin with /from_room
  *
@@ -49,22 +68,8 @@ var listenerMap = {};
  * and adds the current room to the req object
  */
 app.use('/from_room', function(req, res, next){
-	console.log("middleware called");
 	//the body is the part of the request that should contain the access_token
-	let body;
-	
-	//for gets, the body is query, for posts it is in body
-	switch(req.method){
-		case 'POST':
-			body= req.body;
-			break;
-		case 'GET':
-			body= req.query;
-			break
-		default:
-			res.sendStatus(432);
-			return;
-	}
+	let body= getBody(req);
 	
 	//if the client did not pass the access token, send error
 	if(!body.access_token){
@@ -82,6 +87,34 @@ app.use('/from_room', function(req, res, next){
 	
 	//otherwise, proceed to correct handler
 	req.current_room= current_room;
+	next();
+});
+
+/**
+ * if the user requests to do something which they should be in the lobby
+ * to do, the url will begin with /from_lobby
+ *
+ * this middle ware verifies that the user is not in a room
+ */
+app.use('/from_lobby', function(req, res, next){
+	//the body is the part of the request that should contain the access_token
+	let body= getBody(req);
+	
+	//if the client did not pass the access token, send error
+	if(!body.access_token){
+		res.sendStatus(451);
+		return;
+	}
+	
+	let current_room= roomList[body.access_token];
+	
+	//if the client is currently in a room, send error
+	if(current_room){
+		res.sendStatus(421);
+		return;
+	}
+	
+	//otherwise, proceed to correct handler
 	next();
 });
 
@@ -139,7 +172,7 @@ app.get('/callback', function(req, res){
 	//then send that id to the client
 	request.post(authOptions, function(error, responce, body){
 		access_token= body.access_token;
-		
+
 		sendAccessToken(res, access_token);
 	});
 });
@@ -248,7 +281,7 @@ app.post('/from_room/addToQueue', function(req, res){
  *		index : the index of the user's current room
  *	}
  */
-app.get('/from_room/getRooms', function(req, res) {
+app.get('/getRooms', function(req, res) {
 	const dataObject = {
 		available_rooms : rooms,
 		index : Object.keys(rooms).indexOf(req.query.access_token)
@@ -268,48 +301,65 @@ app.get('/from_room/getRooms', function(req, res) {
  *
  * Move the user to the given room
  */
-app.post('/from_room/moveToRoom', function(req, res) {
-	console.log("moveTo got called");
-    let current_room= req.current_room;
-
+app.post('/from_lobby/moveToRoom', function(req, res) {
+	var username= req.body.username;
+	var token= req.body.access_token;
+	
+	//a request to join a room must include the username and token
+	if(!username || !token){
+		res.sendStatus(451);
+		return;
+	}
+	
     move_to = rooms[req.body.moveTo];
 
-    if(current_room !== move_to) {
-		//if user name and token are correct
-        if(current_room.clientTokens[req.body.username] == req.body.access_token) {
-			
-			//remove client from old room, and add them to the new room
-            current_room.removeClient(req.body.username);
-            move_to.addClient(req.body.username, req.body.access_token);
+	//add client to the new room
+	move_to.addClient(username, access_token);
 
-			roomList[req.body.access_token] = move_to;
-			debug_log("Moved " + req.body.username + " from room " + current_room.title + " to room " + move_to.title);
-            move_to.playCurrentSong(req.body.username);
+	//register the move with in the roomList
+	roomList[access_token] = move_to;
+	debug_log("Moved " + username + " to room " + move_to.title);
+	
+	//play the current song for the user
+	move_to.playCurrentSong(username);
 
-			const dataObject = {
-				room_name : move_to.title,
-				queueInfo : move_to.makeQueueInfoObject()
-			};
-			
-			res.json(dataObject);
-			
-			//emit queue for the room so all can see the new user
-			move_to.emitQueue();
+	const dataObject = {
+		room_name : move_to.title,
+		queueInfo : move_to.makeQueueInfoObject()
+	};
+	
+	//respond with the redirect location
+	res.json({
+		redirect : hashQS("/room.html", {
+			username : username,
+			token : token,
+			room : move_to.title
+		})
+	});
+	
+	//emit queue for the room so all can see the new user
+	move_to.emitQueue();
 
-			//move the listener
-			var listener= listenerMap[req.body.access_token];
-			if(listener){
-				current_room.queueEventEmitter.removeListener('pollqueue', listener);
-				move_to.queueEventEmitter.once('pollqueue', listener);
-			}
-			else {
-				debug_log("Listener error");
-			}
-        }
-    }
-	else{
-		debug_log(req.body.username + " already in room " + current_room.title);
+	//move the listener
+	var listener= listenerMap[access_token];
+	if(listener){
+		
+		move_to.queueEventEmitter.once('pollqueue', listener);
 	}
+	else {
+		debug_log("Listener error");
+	}
+});
+
+app.post('/from_room/leaveRoom', function(req, res){
+	//remove client from old room, and add them to the new room
+	current_room.removeClient(req.body.username);
+	
+	//remove there listener from the map and room
+	current_room.queueEventEmitter.removeListener('pollqueue', listener);
+	delete listenerMap[req.body.access_token];
+	
+	//TODO res something here
 });
 
 /**
@@ -373,7 +423,7 @@ function setSongTimeout(room, songInfo){
  *
  * Remove the user from the website
  */
-app.post("/from_room/exit_site", function(req, res){
+app.post("/exit_site", function(req, res){
 	var username= req.body.username;
 	var token= req.body.access_token;
 	
@@ -393,44 +443,34 @@ app.post("/from_room/exit_site", function(req, res){
 });
 
 /**
- * Handle a request for a user to join the root room
- * Expected req.body:
- * 	{
- *		username : the user's username,
- *		access_token : the user's access_token
- *	}
- *
- * Add the user to the root room and respond with the root queue
- */
-app.post("/join_room", function(req, res){
-	var username= req.body.username;
-	var token= req.body.access_token;
-	
-	if(username && token){
-		root.addClient(username, token);
-		roomList[token] = root;
-		debug_log("Joined room: " + username);
-		root.playCurrentSong(username);
-		
-		//send the queue for the room they just joined -- root
-		res.json(root.makeQueueInfoObject());
-	}
-	else{
-		debug_log("Falied to join");
-		res.sendStatus(451);
-	}
-});
-
-/**
  * redirect the given responce object (presumably a user)
- * to the url with their access token as a querystring
+ * to the url with their access token and username as a querystring
  */
 function sendAccessToken(res, token){
-	var string= querystring.stringify({
-		token : token
+	//get the user's username
+	const options= {
+		url: "https://api.spotify.com/v1/me",
+		method: 'GET',
+		headers: {
+			'Authorization' : 'Bearer ' + token
+		}
+	}
+
+	request(options, function(error, response, body){
+		body= JSON.parse(body);
+
+		res.redirect(hashQS("/lobby.html", {
+			username : body.display_name,
+			token : token
+		}));
 	});
-	
-	res.redirect("/#" + string);
+}
+
+/**
+ * retrun a querystringified version of the path and object
+ */
+function hashQS(path, obj){
+	return path + "#" + querystring.stringify(obj);
 }
 
 /**

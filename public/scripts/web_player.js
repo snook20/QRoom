@@ -29,3 +29,29 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 	// Connect to the player!
 	player.connect();
 };
+
+/**
+ * switch playback to the web player
+ */
+function activatePlayer(device_id){
+	$.ajax({
+		url: "https://api.spotify.com/v1/me/player",
+		method: 'PUT',
+		headers: {
+			'Authorization' : 'Bearer ' + access_token,
+			"Content-Type": "application/json"
+		},
+		
+		data : JSON.stringify({
+			device_ids: [device_id]
+		}),
+		
+		error : function(message){
+			console.log("failed to switch playback");
+		},
+
+		success : function(body){
+			console.log("switched playback");
+		}
+	});
+}

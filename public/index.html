@@ -1,91 +1,13 @@
+<!-- This page shows the login screen -->
 <!doctype html>
 <html>
 <html lang="en">
 	<head>
 		<title>QRoom</title>
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		
-		<!-- include the styles -->
-		<link rel="stylesheet" type="text/css" href="./styles/styles.css">
-		
+		<meta name="viewport" content="width=device-width, initial-scale=1">		
 	</head>
-	<body onbeforeunload="quit()">
-
-	
-		<!-- Display the login page before the user has logged in with spotify -->
-		<div id = "login_page" >
-			<a href = "/login">Click to Login with Spotify</a>
-			
-			
-		</div>
-		
-		<!-- Display the lobby page once a user has logged in, but before they join a room -->
-		<div id = "lobby">
-			
-		</div>
-		
-		<!-- Display the room div when the user is in a room -->
-		<div id = "room" style = "display:none">
-
-			<header>
-				<h1>QRoom</h1>
-				<h6><div id="name"></div></h6>
-				<h6><div id="roomLabel">root</div></h6>
-			</header>
-
-			<section>
-				<rooms>
-	  	   			<center><h3>Rooms</h3></center>
-				   	<button id="showRooms">Show rooms</button>
-				   	<div id="room_list"></div>
-					<br>
-					<div>Current members:</div>
-					<div id="users"></div>
-				</rooms>
-				  
-			    <queue>
-					<div class="playBar" id="songBar">
-                        <label align="bottom" class="switch">
-                            <input id="volumeSwitch" type="checkbox" checked onchange="changeVolume()">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-				  	<center><h3>Queue</h3></center>
-				  	<div id="queue"></div>
-
-		   	    </queue>
-				  
-			    <search>
-				    <center><h3>Search</h3></center>
-				    <form id="songInputForm" method="get">
-						Song search: <input type="text" name="song_search" value="Sunflower"><br>
-						<input type="submit" style="display:none"/>
-					</form>
-					<div id="search_list"></div>	
-				</search>
-			</section>
-			
-			
-			
-		</div><!-- end room div -->
-		
-		<!-- Load jQuery -->
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-		
-		<!-- load global scripts -->
-		<script src = "./scripts/global.js"></script>
-		
-		<script src = "./scripts/login.js"></script>
-		
-		<script src = "./scripts/lobby.js"></script>
-		
-		<!-- web player scripts -->
-		<script src="https://sdk.scdn.co/spotify-player.js"></script>
-		<script src="./scripts/web_player.js"></script>
-		
-		<script src = "./scripts/room.js"></script>
-		<!-- <script src="./scripts/script.js"></script> -->
-		
+	<body>
+		<a id = "login_button" href = "/login">Click to Login with Spotify</a>
 	</body>
 </html>

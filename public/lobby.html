@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<html lang="en">
+	<head>
+		<title>QRoom</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		
+		<!-- include the styles -->
+		<link rel="stylesheet" type="text/css" href="./styles/lobby.css">
+		
+	</head>
+	<body>
+		<div id= "welcome">
+			Welcome <span id = "name"></span> to QRoom
+		</div>
+		
+		<center><h3>Rooms</h3></center>
+		<button id="showRooms">Show rooms</button>
+		<div id="room_list"></div>
+		
+		<!-- Load jQuery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+		
+		<!-- load global scripts -->
+		<script src = "./scripts/global.js"></script>
+		
+		<!-- load the lobby script -->
+		<script src = "./scripts/lobby.js"></script>
+	</body>
+</html>

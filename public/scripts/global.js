@@ -1,23 +1,47 @@
-var username = null;
-var access_token = null;
-var room_list = null;
+var access_token;
+var username;
 
-const topLevelViews= [
-	$('#login_page'),
-	$('#lobby'),
-	$('#room')
-];
-
-switchView('login_page');
+//once everything has loaded
+$(function(){
+	let hashParams= getHashParams();
+	access_token= hashParams.token;
+	username= hashParams.username;
+	
+	afterGlobalLoad(hashParams);
+});
 
 /**
- * switch the view to show only the given id
- */
-function switchView(viewId){
-	window.focus();
-	console.log("switching view to " + viewId);
-	for(view of topLevelViews){
-		view.hide();
+	parses url hash data into object
+	
+	copied from spotify web authorization example
+*/
+function getHashParams() {
+	var hashParams = {};
+	var e, r = /([^&;=]+)=?([^&;]*)/g,
+		q = window.location.hash.substring(1);
+	while ( e = r.exec(q)) {
+		hashParams[e[1]] = decodeURIComponent(e[2]);
 	}
-	$('#'+viewId).show();
+	return hashParams;
+}
+
+/**
+ * send request to be removed from the site
+ */
+function quit() {
+	console.log("Test quit function")
+	if(access_token == null){
+		return '';
+	}
+	var dataObject = {
+		username : username,
+		access_token : access_token
+	}
+	$.ajax({
+		type: 'POST',
+		url : '/from_room/exit_site',
+		data : JSON.stringify(dataObject),
+		contentType: 'application/json',
+	});
+	return '';
 }
