@@ -1,0 +1,35 @@
+/*
+    #123  -- dark
+    #ccc -- medium
+    #f1f1f1 -- light
+
+ */
+
+.center {
+    display : block;
+    margin-left : auto;
+    margin-right : auto;
+    margin-top : 5%;
+    width : 10%;
+}
+
+#login_button {
+    background-color: #ccc;
+    border-radius : 50px;
+
+    border : 3px solid #123;
+    padding : 3%;
+
+    color : #123;
+
+    /*remove underline*/
+    text-decoration : none;
+
+    text-align : center;
+}
+
+#login_button:hover {
+    background-color : #123;
+    border-color : #f1f1f1;
+    color : #f1f1f1;
+}

@@ -18,42 +18,19 @@ function layoutUserInfo(){
 }
 
 /**
- * join the root room
- */
-function joinRoom(username, access_token){
-	var dataObject = {
-		username : username,
-		access_token : access_token
-	};
-	
-	$.ajax({
-		type: 'POST',
-		url : '/join_room',
-		data : JSON.stringify(dataObject),
-		contentType: 'application/json',
-		success : function(queueInfo){
-			//start polling for the queue
-			console.log("joined room");
-			pollQueue();
-			
-			layoutQueue(queueInfo);
-		}
-	});
-}
-
-/**
  * get the currently registered rooms and lay them out
  */
 function showRooms() {
 	const dataObject = {
 		access_token : access_token,
 		username: username
-	}
+	};
+
 	const options= {
 		url: '/getRooms',
 		method: 'GET',
 		data: dataObject
-	}
+	};
 
 	$.get(options, function(error, response, body){
 		console.log(body.responseJSON);

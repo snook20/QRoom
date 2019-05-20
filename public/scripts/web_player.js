@@ -52,6 +52,10 @@ function activatePlayer(device_id){
 
 		success : function(body){
 			console.log("switched playback");
+			
+			//play the current song in this room
+			//play the current song
+			playCurrentSong();
 		}
 	});
 }

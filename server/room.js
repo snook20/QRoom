@@ -66,6 +66,7 @@ class room {
 	/* start playback of the current song in this room for the given user
 	 */
 	playCurrentSong(username){
+		//if there is no current song
     	if (this.songStartTime == null) {
             console.log("\tPausing for: " + username);
             const options= {
@@ -77,12 +78,13 @@ class room {
             };
 
             request(options, function(error, response, body){
-
+				//do nothing with responce
             });
 		}
     	else {
             var timeOffset = Date.now() - this.songStartTime;  //difference is in milliseconds
             console.log("\tPlaying for: " + username);
+			
             const options= {
                 url: 'https://api.spotify.com/v1/me/player/play',
                 method: 'PUT',
@@ -101,7 +103,8 @@ class room {
             };
 
             request(options, function(error, response, body){
-
+				//do nothing with responce
+				console.log(body);
             });
 		}
 	}

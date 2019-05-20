@@ -9,12 +9,11 @@ function afterGlobalLoad(hashParams){
 	$('#songInputForm').submit(function() {
 		var title = document.getElementById("songInputForm").elements[0].value;
 		searchSong(title);
-		//this should prevent page reloading
+
+		//returning false should prevent page reloading
 		return false;
 	});
 }
-
-
 
 /**
  * search for a song from the given string
@@ -61,10 +60,11 @@ function resultButton(track){
  * current room's queue
  */
 function playSongCode(songCode){
-	var dataObject = {
+	const dataObject = {
 		access_token : access_token,
+		username : username,
 		songCode : songCode
-	}
+	};
 
 	$.ajax({
 		type: 'POST',
@@ -80,7 +80,7 @@ function playSongCode(songCode){
  * toggle mute
  */
 function changeVolume(){
-	var volume = document.getElementById("volumeSwitch").checked ? 100 : 0;
+	const volume = document.getElementById("volumeSwitch").checked ? 100 : 0;
 	$.ajax({
 		url: "https://api.spotify.com/v1/me/player/volume?volume_percent=" + volume,
 		method: 'PUT',
@@ -115,7 +115,7 @@ function pollQueue(){
 	const dataObject = {
 		access_token : access_token,
 		username : username
-	}
+	};
 	
 	$.ajax({
 		method: 'GET',
@@ -134,7 +134,21 @@ function pollQueue(){
 			pollQueue()
 		},
 		timeout: 600000
-	})
+	});
+}
+
+function playCurrentSong(){
+	const dataObject = {
+		access_token : access_token,
+		username : username
+	};
+	
+	$.ajax({
+		method : 'POST',
+		url : '/from_room/play_for_me',
+		data : JSON.stringify(dataObject),
+		contentType: 'application/json',
+	});
 }
 
 /**
@@ -143,12 +157,13 @@ function pollQueue(){
 function getQueue(){
 	const dataObject = {
 		access_token : access_token,
-	}
+		username : username
+	};
 	const options = {
 		url : '/from_room/getqueue',
 		type : 'GET',
 		data : dataObject
-	}
+	};
 	$.get(options, function(queueInfo){
 		layoutQueue(queueInfo);
 	});

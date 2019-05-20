@@ -1,4 +1,5 @@
 /* Status Codes:
+ * 200 - request completed
  * 420 - not in a room
  * 421 - already in a room
  * 432 - unexpected request method
@@ -70,9 +71,9 @@ function getBody(req){
 app.use('/from_room', function(req, res, next){
 	//the body is the part of the request that should contain the access_token
 	let body= getBody(req);
-	
+
 	//if the client did not pass the access token, send error
-	if(!body.access_token){
+	if(!body.access_token || !body.username){
 		res.sendStatus(451);
 		return;
 	}
@@ -268,6 +269,16 @@ app.post('/from_room/addToQueue', function(req, res){
 });
 
 /**
+ * handle a request for the client to start playing the current song for
+ * the user
+ */
+app.post('/from_room/play_for_me', function(req, res){
+	console.log("play for me " + req.current_room.title);
+	req.current_room.playCurrentSong(req.body.username);
+	res.sendStatus(200);
+});
+
+/**
  * Handle a request for the current available rooms
  * Expected req.body:
  * 	{
@@ -424,6 +435,7 @@ function setSongTimeout(room, songInfo){
  * Remove the user from the website
  */
 app.post("/exit_site", function(req, res){
+	console.log("exit site");
 	var username= req.body.username;
 	var token= req.body.access_token;
 	

@@ -29,14 +29,14 @@ function getHashParams() {
  * send request to be removed from the site
  */
 function quit() {
-	console.log("Test quit function")
+	console.log("Test quit function");
 	if(access_token == null){
 		return '';
 	}
 	var dataObject = {
 		username : username,
 		access_token : access_token
-	}
+	};
 	$.ajax({
 		type: 'POST',
 		url : '/from_room/exit_site',
