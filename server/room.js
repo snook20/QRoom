@@ -45,23 +45,38 @@ class room {
 	 * the state of this room
 	 */
 	makeQueueInfoObject(){
+	    var duration;
     	if (this.currentSong == null) {
-    		var duration = null;
+    		duration = null;
 		}
 		else {
-			var duration = this.currentSong.duration;
+			duration = this.currentSong.duration;
 		}
 
-		const info = {
+		return {
 			playing : this.currentSong,
 			queue : this.queue,
 			startTime : this.songStartTime,
 			duration : duration,
             clientTokens : this.clientTokens
+            // TODO dont pass each user everyone's tokens
 		};
 
-		return info;
+		// return info;
 	}
+
+	getUsernames(){
+	    return Object.keys(this.clientTokens);
+    }
+
+    getQueueInfo(){
+	    return {
+	        playing : this.currentSong,
+            queue : this.queue,
+            startTime : this.songStartTime,
+            duration : this.currentSong ? null : this.currentSong.duration
+        }
+    }
 	
 	/* start playback of the current song in this room for the given user
 	 */
