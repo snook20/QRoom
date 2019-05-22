@@ -37,8 +37,8 @@ module.exports.rooms = rooms = [root, room1, room2, room3];
 module.exports.roomList = roomList = {};
 
 app.use('/from_lobby', require('./server/from_lobby.js'));
-
 app.use('/from_room', require('./server/from_room.js'));
+app.use('/moderation', require('./server/moderation'));
 
 /**
  * handle a request for the user to poop
