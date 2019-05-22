@@ -147,13 +147,18 @@ router.post('/play_for_me', function(req, res){
 
 router.post('/leaveRoom', function(req, res){
     //remove client from old room, and add them to the new room
-    current_room.removeClient(req.body.username);
+    req.current_room.removeClient(req.body.username);
 
     //remove there listener from the map and room
-    current_room.queueEventEmitter.removeListener('pollqueue', listener);
+    req.current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[req.body.access_token]);
     delete listenerMap[req.body.access_token];
 
-    //TODO res something here
+    res.json({
+        redirect : hashQS('/lobby.html', {
+            username : req.body.username,
+            access_token : req.body.access_token
+        })
+    });
 });
 
 /**

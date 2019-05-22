@@ -173,7 +173,7 @@ function sendAccessToken(res, token){
 
 		res.redirect(hashQS("/lobby.html", {
 			username : body.display_name,
-			token : token
+			access_token : token
 		}));
 	});
 }

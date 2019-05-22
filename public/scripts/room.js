@@ -13,6 +13,9 @@ function afterGlobalLoad(hashParams){
 		//returning false should prevent page reloading
 		return false;
 	});
+
+	//register the button for returning to the lobby
+	document.getElementById('lobby_button').onclick = function(){leaveRoom()};
 }
 
 /**
@@ -52,7 +55,7 @@ function layoutSearch(tracks, n){
  * this button will call playSongCode with the given track id
  */
 function resultButton(track){
-	return '<button onclick= "playSongCode(\''+track.uri+'\')">'+track.artists[0].name+' : '+track.name+'</button>'
+	return `<button onclick= "playSongCode('${track.uri}')>${track.artists[0].name} : ${track.name}</button>`;
 }
 
 /**
@@ -184,7 +187,7 @@ function layoutQueue(info){
 	}
 	else{
 		// if songs are playing, display queue
-		var html= "<div>Playing: " + info.playing.artist + ' : ' + info.playing.title + "<div><br>";
+		var html= `<div>Playing: ${info.playing.artist} : ${info.playing.title}<div><br>`;
 		for(i in info.queue){
 			html+= getSongDiv(info.queue, i) + "<br>";
 		}
@@ -222,4 +225,25 @@ function getSongDiv(queue, i){
 	var info= song.artist + " : " + song.title;
 	var index= parseInt(i)+1;
 	return "<div>" + index + ") " + info + "</div>";
+}
+
+/**
+ * send request to leave the room
+ * redirect the user accordingly
+ */
+function leaveRoom(){
+	const dataObject = {
+		access_token : access_token,
+		username : username
+	};
+
+	$.ajax({
+		method : 'POST',
+		url : '/from_room/leaveRoom',
+		data : JSON.stringify(dataObject),
+		contentType: 'application/json',
+		success : function(body){
+			window.location.href= body.redirect;
+		}
+	});
 }

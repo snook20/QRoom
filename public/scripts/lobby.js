@@ -5,7 +5,7 @@
  */
 function afterGlobalLoad(hashParams){
 	layoutUserInfo();
-	
+
 	//register the show rooms button
 	document.getElementById("showRooms").onclick = function(){showRooms()};
 }

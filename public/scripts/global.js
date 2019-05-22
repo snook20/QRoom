@@ -4,9 +4,10 @@ var username;
 //once everything has loaded
 $(function(){
 	let hashParams= getHashParams();
-	access_token= hashParams.token;
+	access_token= hashParams.access_token;
 	username= hashParams.username;
-	
+
+	console.log("global loaded");
 	afterGlobalLoad(hashParams);
 });
 

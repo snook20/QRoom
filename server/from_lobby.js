@@ -83,7 +83,7 @@ router.post('/moveToRoom', function(req, res) {
     res.json({
         redirect : hashQS("/room.html", {
             username : username,
-            token : access_token,
+            access_token : access_token,
             room : move_to.title
         })
     });
