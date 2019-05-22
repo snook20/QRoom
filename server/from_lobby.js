@@ -3,10 +3,11 @@ const router = express.Router();
 
 const statusCode = require("./status.js");
 
+const PollResponseStore = require('./PollResponseStore.js');
+
 const main = require('../app.js');
 const rooms= main.rooms;
 const roomList = main.roomList;
-const listenerMap = main.listenerMap;
 
 const helpers = require('./helpers');
 const getBody = helpers.getBody;
@@ -57,12 +58,12 @@ router.post('/moveToRoom', function(req, res) {
     var access_token= req.body.access_token;
 
     //a request to join a room must include the username and token
-    if(!username || !access_token){
-        res.sendStatus(451);
+    if(!username || !access_token) {
+        res.sendStatus(statusCode.MISSING_INFO);
         return;
     }
 
-    move_to = rooms[req.body.moveTo];
+    let move_to = rooms[req.body.moveTo];
 
     //add client to the new room
     move_to.addClient(username, access_token);
@@ -73,11 +74,6 @@ router.post('/moveToRoom', function(req, res) {
 
     //play the current song for the user
     move_to.playCurrentSong(username);
-
-    const dataObject = {
-        room_name : move_to.title,
-        queueInfo : move_to.makeQueueInfoObject()
-    };
 
     //respond with the redirect location
     res.json({
@@ -90,16 +86,6 @@ router.post('/moveToRoom', function(req, res) {
 
     //emit queue for the room so all can see the new user
     move_to.emitQueue();
-
-    //move the listener
-    var listener= listenerMap[access_token];
-    if(listener){
-
-        move_to.queueEventEmitter.once('pollqueue', listener);
-    }
-    else {
-        debug_log("Listener error");
-    }
 });
 
 

@@ -55,7 +55,7 @@ function layoutSearch(tracks, n){
  * this button will call playSongCode with the given track id
  */
 function resultButton(track){
-	return `<button onclick= "playSongCode('${track.uri}')>${track.artists[0].name} : ${track.name}</button>`;
+	return `<button onclick= "playSongCode('${track.uri}')">${track.artists[0].name} : ${track.name}</button>`;
 }
 
 /**

@@ -4,7 +4,8 @@
  * The room class is exported
  */
 
-var EventEmitter = require("events").EventEmitter;
+const PollResponseStore = require('./PollResponseStore.js');
+
 var request= require("request");
 
 class room {
@@ -18,10 +19,6 @@ class room {
         this.currentSong = null;
         //when song started to play
 		this.songStartTime = null;
-		
-		//queue emitter
-		this.queueEventEmitter = new EventEmitter();
-		this.queueEventEmitter.setMaxListeners(10);
     }
 	
 	/* add a user to this room with the given
@@ -38,7 +35,13 @@ class room {
     }
 	
 	emitQueue(){
-		this.queueEventEmitter.emit('pollqueue', this.makeQueueInfoObject());
+        for(let username in this.clientTokens){
+            let clientToken = this.clientTokens[username];
+
+            if(PollResponseStore.isRegistered(clientToken, 'queue')){
+                PollResponseStore.res_json(this.clientTokens[username], 'queue', this.makeQueueInfoObject());
+            }
+        }
 	}
 	
 	/* return a simple object with members reflecting

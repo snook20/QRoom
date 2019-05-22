@@ -5,10 +5,11 @@ const request = require('request');
 
 const statusCode = require("./status.js");
 
+const PollResponseStore = require('./PollResponseStore.js');
+
 const main = require('../app.js');
 const rooms= main.rooms;
 const roomList = main.roomList;
-const listenerMap = main.listenerMap;
 
 const helpers = require('./helpers');
 const getBody = helpers.getBody;
@@ -72,22 +73,15 @@ router.get("/getqueue", function(req, res){
  * Once there is an update to the queue, send the json of the current queue
  */
 router.get('/pollqueue', function(req, res){
-    //function to execute when a queue update occurs,
-    //send the given queueInfo object to the polling user
-    var listener = function(queueInfo){
-        debug_log("Sending queue to " + req.query.username);
-        res.json(queueInfo);
-    };
 
     //if this user already has a registered listener, remove it
-    if(listenerMap[req.query.access_token]){
-        req.current_room.queueEventEmitter.
-        removeListener('pollqueue', listenerMap[req.query.access_token]);
+    if(PollResponseStore.isRegistered(req.query.access_token, 'queue')){
+        PollResponseStore.unregister(req.query.access_token, 'queue');
     }
 
     //register the new listener
-    listenerMap[req.query.access_token]= listener;
-    req.current_room.queueEventEmitter.once('pollqueue', listener);
+    PollResponseStore.register(req.query.access_token, 'queue', res);
+
     debug_log("Polling for " + req.query.username);
 });
 
@@ -146,13 +140,22 @@ router.post('/play_for_me', function(req, res){
 });
 
 router.post('/leaveRoom', function(req, res){
-    //remove client from old room, and add them to the new room
+    //remove client from the room
     req.current_room.removeClient(req.body.username);
 
-    //remove there listener from the map and room
-    req.current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[req.body.access_token]);
-    delete listenerMap[req.body.access_token];
+    delete roomList[req.body.access_token];
 
+    //remove the long poll
+    try {
+        PollResponseStore.unregister(req.body.access_token, 'queue');
+    }
+    catch(error){
+        debug_log("Was not registered when leaving room")
+    }
+
+    req.current_room.emitQueue();
+
+    //prompt the user to redirect themselves to the lobby
     res.json({
         redirect : hashQS('/lobby.html', {
             username : req.body.username,

@@ -18,6 +18,9 @@ var app= express();
 app.use(express.static('./public'));
 app.use(bodyParser.json());
 
+//require the Poll Response Store
+const PollResponseStore = require('./server/PollResponseStore');
+
 //require the room class
 var room = require('./server/Room.js');
 
@@ -32,10 +35,6 @@ module.exports.rooms = rooms = [root, room1, room2, room3];
 //key: token, value: room
 //this is an object of which rooms people are listening in
 module.exports.roomList = roomList = {};
-
-//key: token, value: queue listener
-//this map makes sure we only have one listener per user
-module.exports.listenerMap = listenerMap = {};
 
 app.use('/from_lobby', require('./server/from_lobby.js'));
 
@@ -144,7 +143,14 @@ app.post("/exit_site", function(req, res){
 
 		//removes user from room and the emitter for the room
 		current_room.removeClient(username);
-		current_room.queueEventEmitter.removeListener('pollqueue', listenerMap[token]);
+
+		try{
+			PollResponseStore.unregister(token, 'queue');
+		}
+		catch(error){
+			debug_log("Was not registered when exiting site");
+		}
+
 		debug_log(username + " left the site");
 	}
 	else{
@@ -158,22 +164,22 @@ app.post("/exit_site", function(req, res){
  * redirect the given responce object (presumably a user)
  * to the url with their access token and username as a querystring
  */
-function sendAccessToken(res, token){
+function sendAccessToken(res, token) {
 	//get the user's username
-	const options= {
+	const options = {
 		url: "https://api.spotify.com/v1/me",
 		method: 'GET',
 		headers: {
-			'Authorization' : 'Bearer ' + token
+			'Authorization': 'Bearer ' + token
 		}
 	};
 
-	request(options, function(error, response, body){
-		body= JSON.parse(body);
+	request(options, function (error, response, body) {
+		body = JSON.parse(body);
 
 		res.redirect(hashQS("/lobby.html", {
-			username : body.display_name,
-			access_token : token
+			username: body.display_name,
+			access_token: token
 		}));
 	});
 }

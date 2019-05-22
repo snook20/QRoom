@@ -1,5 +1,5 @@
 window.onSpotifyWebPlaybackSDKReady = () => {
-	const token = getHashParams().token;
+	const token = getHashParams().access_token;
 
 	const player = new Spotify.Player({
 		name: 'QRoom Player',

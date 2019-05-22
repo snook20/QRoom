@@ -44,7 +44,7 @@ module.exports.isRegistered = isRegistered = function(access_token, type){
 module.exports.register = function(access_token, type, res){
     //don't allow a reregistration
     if(isRegistered(access_token, type)){
-        throw `${access_token} already registered with ${type}`;
+        throw `Cannot register: ${access_token} already registered with ${type}`;
     }
 
     //if there is nothing registered at all with this token
@@ -64,7 +64,7 @@ module.exports.register = function(access_token, type, res){
 module.exports.unregister = unregister = function(access_token, type){
     //cannot unregister if not already registered
     if(!isRegistered(access_token, type)){
-        throw `${access_token} is not registered with ${type}`;
+        throw `Cannot unregister: ${access_token} is not registered with ${type}`;
     }
 
     delete resMap[access_token][type];
@@ -80,7 +80,7 @@ module.exports.unregister = unregister = function(access_token, type){
 module.exports.update = function(access_token, type, res){
     //cannot update if not already registered
     if(!isRegistered(access_token, type)){
-        throw `${access_token} is not registered with ${type}`;
+        throw `Cannot update: ${access_token} is not registered with ${type}`;
     }
 
     resMap[access_token][type]= res;
@@ -97,7 +97,7 @@ module.exports.update = function(access_token, type, res){
 module.exports.res_json = function(access_token, type, obj){
     //cannot update if not already registered
     if(!isRegistered(access_token, type)){
-        throw `${access_token} is not registered with ${type}`;
+        throw `Cannot json: ${access_token} is not registered with ${type}`;
     }
 
     let res = resMap[access_token][type];
