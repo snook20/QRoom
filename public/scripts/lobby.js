@@ -66,7 +66,7 @@ function createJoinRoomButton(index, title){
     let joinRoom = `joinRoom(${index},'${title}')`;
     console.log(joinRoom);
     return `
-        <button onclick=${joinRoom} class="room_button">
+        <button onclick="${joinRoom}" class="room_button">
             ${title}
         </button>
     `;
