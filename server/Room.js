@@ -9,8 +9,10 @@ const PollResponseStore = require('./PollResponseStore.js');
 var request= require("request");
 
 class room {
-    constructor(roomName) {
+    constructor(roomName, key) {
         this.title = roomName;
+        this.key = key;
+
         //key: username, value: token
         this.clientTokens = {};
         //song queue
@@ -79,6 +81,12 @@ class room {
             startTime : this.songStartTime,
             duration : this.currentSong ? null : this.currentSong.duration
         }
+    }
+
+    getRoomInfo(){
+	    return {
+	        title : this.title
+        };
     }
 	
 	/* start playback of the current song in this room for the given user

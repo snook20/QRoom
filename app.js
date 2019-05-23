@@ -22,12 +22,12 @@ app.use(bodyParser.json());
 const PollResponseStore = require('./server/PollResponseStore');
 
 //require the room class
-var room = require('./server/Room.js');
+const Room = require('./server/Room.js');
 
-var root = new room("root");
-var room1 = new room("[1]");
-var room2 = new room("[2]");
-var room3 = new room("[3]");
+var root = new Room("root", null);
+var room1 = new Room("[1]", null);
+var room2 = new Room("[2]", null);
+var room3 = new Room("[3]", null);
 
 //this is an array of all rooms
 module.exports.rooms = rooms = [root, room1, room2, room3];
@@ -59,8 +59,7 @@ app.get('/login', function(req, res){
 		//redirect that code to our callback
 		redirect_uri: redirect_uri
 	});
-	
-	res.set('Access-Control-Allow-Origin','*');
+
 	//redirect to the spotify login
 	res.redirect('https://accounts.spotify.com/authorize?' + options);
 });
@@ -96,32 +95,11 @@ app.get('/callback', function(req, res){
 		access_token= body.access_token;
 
 		sendAccessToken(res, access_token);
+
+		//add this access_token to the room list
+		roomList[access_token]= null;
 	});
 });
-
-/**
- * Handle a request for the current available rooms
- * Expected req.body:
- * 	{
- *		username : the user's username,
- *		access_token : the user's access_token
- *	}
- *
- * Respond with a json containing:
- *	{
- *		available_rooms : an array of room objects,
- *		index : the index of the user's current room
- *	}
- */
-app.get('/getRooms', function(req, res) {
-	const dataObject = {
-		available_rooms : rooms,
-		index : Object.keys(rooms).indexOf(req.query.access_token)
-	};
-	
-    res.json(dataObject);
-});
-
 
 /**
  * Handle a request for a user to exit the website

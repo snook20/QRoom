@@ -2,6 +2,8 @@ const debug_output= true;
 
 const querystring = require('querystring');
 
+const main = require('../app.js');
+
 /**
  * returns the body from the given request object
  * in particular, return req.body for POST
@@ -35,4 +37,11 @@ module.exports.debug_log = function(string){
     if(debug_output){
         console.log(string);
     }
+};
+
+/**
+ *  return a list of rooms that can be sent to a user
+ */
+module.exports.getRooms = function(){
+    return main.rooms.map(room => room.getRoomInfo());
 };
