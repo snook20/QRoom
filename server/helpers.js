@@ -45,3 +45,16 @@ module.exports.debug_log = function(string){
 module.exports.getRooms = function(){
     return main.rooms.map(room => room.getRoomInfo());
 };
+
+/**
+ * determine whether there is already a room with the given name
+ * @param name the name to test for
+ */
+module.exports.roomTitleTaken = function(name){
+    for(room of main.rooms){
+        if(room.title === name){
+            return true;
+        }
+    }
+    return false;
+};

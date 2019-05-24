@@ -121,7 +121,11 @@ router.post('/create_room', function(req, res){
         replace('"', '').
         replace('`', '');
 
-    //TODO prevent duplicate room names
+    //no duplicate room names allowed
+    if(helpers.roomTitleTaken(title)){
+        res.sendStatus(statusCode.BAD_REQUEST);
+        return;
+    }
 
     //create and register the new room
     let new_room = new Room(title, room_key);
@@ -201,7 +205,7 @@ router.get('/pollrooms', function(req, res){
         PollResponseStore.unregister(access_token, 'rooms');
     }
 
-    //register the poll responce object
+    //register the poll response object
     PollResponseStore.register(access_token, 'rooms', res);
 });
 
