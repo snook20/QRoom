@@ -9,7 +9,17 @@
         <input type="text" id = "key_input">
         <br><br>
 
-        <button id = "getState_button">Get State</button>
+        <!--
+        Buttons should be given an id equal to the moderation endpoint they are calling
+        note that this does not include '/moderation/'
+
+        If this is done, no other front end work should be required, clicking the button will
+        automatically console.log the data returned from /moderation/<button_id>
+        -->
+
+        <button id = "current_state">Get State</button>
+        <br>
+        <button id = "current_polls">Get Registered Polls</button>
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script src = "./scripts/moderation.js"></script>

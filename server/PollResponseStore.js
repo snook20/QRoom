@@ -107,3 +107,21 @@ module.exports.res_json = function(access_token, type, obj){
     res.json(obj);
 };
 
+/**
+ * get a json serialized string representing the resMap
+ */
+module.exports.jsonify = function(){
+    //a simple representation of the map
+    //that doesn't include a res object
+    let simple = {};
+    for(let token in resMap){
+        simple[token] = resMap[token];
+        for(let type in simple[token]){
+            //convert a res object to boolean
+            simple[token][type] = !!resMap[token][type];
+        }
+    }
+
+    return JSON.stringify(simple);
+};
+

@@ -163,7 +163,7 @@ function moveUserToRoom(username, access_token, new_room){
     debug_log("Moved " + username + " to room " + new_room.title);
 
     //play the current song for the user
-    new_room.playCurrentSong(username);
+    //new_room.playCurrentSong(username);
 }
 
 /**
@@ -194,7 +194,7 @@ router.get('/getRooms', function(req, res) {
  * or removed
  */
 router.get('/pollrooms', function(req, res){
-    let access_token= req.body.access_token;
+    let access_token= req.query.access_token;
 
     //if this user already has a poll out, remove it
     if(PollResponseStore.isRegistered(access_token, 'rooms')){
@@ -209,10 +209,13 @@ router.get('/pollrooms', function(req, res){
  * send the current rooms to everyone polling them
  */
 function emitRooms(){
-    const roomInfo = helpers.getRooms();
+    const roomInfo = {
+        available_rooms : helpers.getRooms()
+    };
 
     for(let token in roomList){
         if(PollResponseStore.isRegistered(token, 'rooms')){
+            debug_log("responding to room pool");
             PollResponseStore.res_json(token, 'rooms', roomInfo);
         }
     }

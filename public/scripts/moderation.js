@@ -1,21 +1,40 @@
 $(function(){
-    //register the get state button
-    document.getElementById('getState_button').onclick = function(){logState()};
+    //register the buttons
+    $("button").click(function(){
+        //each button's id should be the endpoint it wants to call
+        logData(this.id);
+    });
 });
 
-function logState(){
+function logData(endpoint){
+    console.log('\n'+endpoint+':');
     const dataObject = {
         key : getEnteredKey()
     };
 
     const options= {
-        url: '/moderation/current_state',
+        url: '/moderation/'+endpoint,
         method: 'GET',
         data: dataObject
     };
 
     $.get(options, function(error, response, body){
-        console.log(body.responseJSON);
+        if(body.responseJSON){
+            console.log(body.responseJSON);
+        }
+        else if(body.responseText){
+            //try to read off the string assuming it's json
+            try{
+                console.log(JSON.parse(body.responseText));
+            }
+            catch(error){
+                //although, it may not be json, in which case just print the string
+                console.log(body.responseText);
+            }
+        }
+        else {
+            console.log(body);
+        }
     });
 }
 
@@ -24,5 +43,4 @@ function logState(){
  */
 function getEnteredKey(){
     return document.getElementById("key_input").value;
-    return document.getElementById("key_form").elements[0].value;
 }

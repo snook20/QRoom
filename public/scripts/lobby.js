@@ -6,6 +6,9 @@
 function afterGlobalLoad(hashParams){
 	layoutUserInfo();
 
+	//get the current rooms and start a poll for new rooms
+	showRooms();
+	pollRooms();
 	//register the show rooms button
 	document.getElementById("showRooms").onclick = function(){
 	    showRooms()
@@ -43,17 +46,49 @@ function showRooms() {
 	};
 
 	$.get(options, function(error, response, body){
-		console.log(body.responseJSON);
-
-		layoutRooms(body.responseJSON.available_rooms, body.responseJSON.index);
+		layoutRooms(body.responseJSON.available_rooms);
 	});
+}
+
+/**
+ * send a long poll get request for the rooms
+ * this should only be called once, since it will repeatedly
+ * poll when a response comes in
+ *
+ * when the poll is responded to, this will layout the current rooms
+ */
+function pollRooms(){
+    console.log("polling rooms");
+    const dataObject = {
+        access_token : access_token,
+        username : username
+    };
+
+    $.ajax({
+        method: 'GET',
+        url: '/from_lobby/pollrooms',
+        data: dataObject,
+        success: function(response){
+            console.log("Recieved rooms");
+            layoutRooms(response.available_rooms);
+        },
+        error : function(){
+            console.log("Timeout or other failure waiting for rooms");
+            //on a failure, send a get for the queue, to be send immideatly
+            showRooms();
+        },
+        complete : function(){
+            pollRooms()
+        },
+        timeout: 600000
+    });
 }
 
 /**
  * layout the rooms, given the list of rooms
  * and the index of the room we are currently in
  */
-function layoutRooms(rooms, currentIndex) {
+function layoutRooms(rooms) {
 	let html = "";
 	for (i in rooms) {
 	    html += createJoinRoomButton(i, rooms[i].title) + "<br>";
@@ -62,9 +97,7 @@ function layoutRooms(rooms, currentIndex) {
 }
 
 function createJoinRoomButton(index, title){
-    console.log(title);
     let joinRoom = `joinRoom(${index},'${title}')`;
-    console.log(joinRoom);
     return `
         <button onclick="${joinRoom}" class="room_button">
             ${title}
