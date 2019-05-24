@@ -1,3 +1,7 @@
+//a list of known rooms, updated everytime
+//we fetch rooms from the server
+let rooms = [];
+
 /**
  * function that will be called after the global
  * script runs. At this point access_token and username
@@ -9,10 +13,11 @@ function afterGlobalLoad(hashParams){
 	//get the current rooms and start a poll for new rooms
 	showRooms();
 	pollRooms();
-	//register the show rooms button
-	document.getElementById("showRooms").onclick = function(){
-	    showRooms()
-	};
+
+	//register the button to create a new room
+    document.getElementById("create_view_button").onclick = function(){
+        displayCreateRoom();
+    };
 
     let roomCreationForm = document.getElementById("room_creation_form");
     roomCreationForm.onsubmit = function(){
@@ -46,7 +51,8 @@ function showRooms() {
 	};
 
 	$.get(options, function(error, response, body){
-		layoutRooms(body.responseJSON.available_rooms);
+	    rooms = body.responseJSON.available_rooms;
+		layoutRooms();
 	});
 }
 
@@ -70,7 +76,8 @@ function pollRooms(){
         data: dataObject,
         success: function(response){
             console.log("Recieved rooms");
-            layoutRooms(response.available_rooms);
+            rooms = response.available_rooms;
+            layoutRooms();
         },
         error : function(){
             console.log("Timeout or other failure waiting for rooms");
@@ -85,10 +92,9 @@ function pollRooms(){
 }
 
 /**
- * layout the rooms, given the list of rooms
- * and the index of the room we are currently in
+ * layout the rooms, from the list of known rooms
  */
-function layoutRooms(rooms) {
+function layoutRooms() {
 	let html = "";
 	for (i in rooms) {
 	    html += createJoinRoomButton(i, rooms[i].title) + "<br>";
@@ -97,9 +103,9 @@ function layoutRooms(rooms) {
 }
 
 function createJoinRoomButton(index, title){
-    let joinRoom = `joinRoom(${index},'${title}')`;
+    let displayRoom = `displayRoom(${index},'${title}')`;
     return `
-        <button onclick="${joinRoom}" class="room_button">
+        <button onclick="${displayRoom}" class="room_button">
             ${title}
         </button>
     `;
@@ -140,15 +146,52 @@ function createRoom(formElements){
 }
 
 /**
+ * display the given room
+ *
+ * @param roomIndex the index of the room to display
+ * @param roomTitle the title of the room to display
+ */
+function displayRoom(roomIndex, roomTitle){
+    console.log("displaying room " + roomTitle);
+    //hide the room creation screen
+    document.getElementById("create_room").style.display= "none";
+
+    //add relevant information to the view room div
+    document.getElementById("view_room_name")
+        .innerHTML= roomTitle;
+
+    //register the form
+    let joinForm = document.getElementById("join_room_form");
+    joinForm.onsubmit = function(){
+        joinRoom(roomIndex, roomTitle, joinForm.roomKey);
+
+        //don't reload the page by returning false
+        return false;
+    };
+
+    //displat the view room
+    document.getElementById("view_room").style.display= "block";
+}
+
+function displayCreateRoom(){
+    //hide the room view
+    document.getElementById("view_room").style.display= "none";
+
+    //show the creation page
+    document.getElementById("create_room").style.display= "block";
+}
+
+/**
  * send a request to switch rooms
  */
-function joinRoom(roomIndex, roomTitle) {
+function joinRoom(roomIndex, roomTitle, roomKey) {
 	var dataObject = {
 		username : username,
 		access_token : access_token,
 		// roomIndex is used because there was problems moving a room object from JS to HTML and back to JS
 		moveTo_index : roomIndex,
-        moveTo_title : roomTitle
+        moveTo_title : roomTitle,
+        moveTo_key : roomKey
 	};
 
 	$.ajax({
