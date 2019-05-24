@@ -33,6 +33,14 @@ queue {
 	height: 500px;
 }
 
+search {
+	float: left;
+	padding: 20px;
+	width: 25%;
+	background-color: #ccc;
+	height: 500px;
+}
+
 div.playBar {
 	width: 0;
 	position: relative;
@@ -41,14 +49,6 @@ div.playBar {
 	border-radius: 10px;
 	background-color: forestgreen;
 	/*animation: playBarAnimation infinite linear;*/
-}
-
-search {
-	float: left;
-	padding: 20px;
-	width: 25%;
-	background-color: #ccc;
-	height: 500px;
 }
 
 /* Standard syntax */

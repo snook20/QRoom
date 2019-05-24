@@ -17,6 +17,53 @@ header {
 	color: white;
 }
 
+/* Create three columns/boxes that floats next to each other */
+rooms {
+	float: left;
+	width: 25%;
+	height: 500px;
+	background: #ccc;
+	padding: 20px;
+}
+
+room_view {
+	float: left;
+	padding: 20px;
+	width: 50%;
+	background-color: #f1f1f1;
+	height: 500px;
+}
+
+users {
+	float: left;
+	padding: 20px;
+	width: 25%;
+	background-color: #ccc;
+	height: 500px;
+}
+
+h3 {
+	width : 100%;
+	text-align: center;
+}
+
+.room_button {
+	width : 100%;
+	margin : 1px;
+
+	background-color: #f1f1f1;
+	border : 1px solid #123;
+	border-radius : 4px;
+
+	color : #123;
+}
+
+.room_button:hover {
+	background-color: #123;
+	color : #f1f1f1;
+}
+
+/*hide room views by default*/
 .room_display {
 	display : none;
 }

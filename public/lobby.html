@@ -15,55 +15,61 @@
 			<h1>QRoom</h1>
 			<h6>Logged in as <span id="name"></span></h6>
 		</header>
-		
-		<h3>Rooms</h3>
-		<div id="room_list"></div>
-		<button id = "create_view_button">
-			Create a new room
-		</button>
 
-		<br><br>
+		<rooms>
+			<span>
+				<h3>Rooms</h3>
+				<button id = "create_view_button">
+					+
+				</button>
+			</span>
+			<div id="room_list"></div>
+		</rooms>
 
-		<!-- display this when creating a new room -->
-		<div id = "create_room" class = "room_display">
-			<form id = "room_creation_form">
-				<div>
-					<label for = "room_name_input">Room name:</label>
-					<input type = "text" id = "room_name_input" name = "room_name">
-				</div>
-				<div>
-					<label for = "room_key_input">Room entrance key:</label>
-					<input type = "text" id = "room_key_input" name = "room_key">
-				</div>
-				<div>
-					<button type = "submit" id = "create_button">
-						Create this room
-					</button>
-				</div>
+		<room_view>
+			<!-- display this when creating a new room -->
+			<div id = "create_room" class = "room_display">
+				<form id = "room_creation_form">
+					<div>
+						<label for = "room_name_input">Room name:</label>
+						<input type = "text" id = "room_name_input" name = "room_name">
+					</div>
+					<div>
+						<label for = "room_key_input">Room entrance key:</label>
+						<input type = "text" id = "room_key_input" name = "room_key">
+					</div>
+					<div>
+						<button type = "submit" id = "create_button">
+							Create this room
+						</button>
+					</div>
 
-			</form>
-		</div>
+				</form>
+			</div>
 
-		<!-- display this when viewing a potential room to join -->
-		<div id = "view_room" class = "room_display">
-			<div id = "view_room_name"></div>
+			<!-- display this when viewing a potential room to join -->
+			<div id = "view_room" class = "room_display">
+				<h3 id = "view_room_name"></h3>
 
-			<form id = "join_room_form">
-				<div>
-					<label for = "join_room_key_input">
-						Room entrance key:
-					</label>
-					<input type = "text" id = "join_room_key_input" name = "room_key">
-				</div>
-				<div>
-					<button type = "submit" id = "join_button">
-						Join this room
-					</button>
-				</div>
-			</form>
-		</div>
+				<form id = "join_room_form">
+					<div>
+						<label for = "join_room_key_input">
+							Room entrance key:
+						</label>
+						<input type = "text" id = "join_room_key_input" name = "room_key">
+					</div>
+					<div>
+						<button type = "submit" id = "join_button">
+							Join this room
+						</button>
+					</div>
+				</form>
+			</div>
+		</room_view>
 
+		<users>
 
+		</users>
 
 		<!-- Load jQuery -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>

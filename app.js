@@ -25,12 +25,9 @@ const PollResponseStore = require('./server/PollResponseStore');
 const Room = require('./server/Room.js');
 
 var root = new Room("root", null);
-var room1 = new Room("[1]", null);
-var room2 = new Room("[2]", null);
-var room3 = new Room("[3]", null);
 
 //this is an array of all rooms
-module.exports.rooms = rooms = [root, room1, room2, room3];
+module.exports.rooms = rooms = [root];
 
 //key: token, value: room
 //this is an object of which rooms people are listening in
