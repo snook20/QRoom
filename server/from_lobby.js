@@ -65,6 +65,14 @@ router.post('/moveToRoom', function(req, res) {
         return;
     }
 
+    //it must also include an index and title
+    if(!req.body.moveTo_index || !req.body.moveTo_title){
+        res.sendStatus(statusCode.MISSING_INFO);
+        return;
+    }
+
+    let move_to = rooms[req.body.moveTo_index];
+
     //make sure that the index matches the room name
     if(rooms[req.body.moveTo_index].title !== req.body.moveTo_title){
         console.log(req.body.moveTo_index + " " + req.body.moveTo_title);
@@ -72,7 +80,13 @@ router.post('/moveToRoom', function(req, res) {
         return;
     }
 
-    let move_to = rooms[req.body.moveTo_index];
+    //make user that the user provided the correct key
+    if(move_to.key !== null && req.body.moveTo_key !== move_to.key){
+        console.log(move_to.key + " versus " + req.body.moveTo_key);
+        res.sendStatus(statusCode.NO_PERMISSION);
+        return;
+    }
+
     moveUserToRoom(username, access_token, move_to);
 
     //respond with the redirect location

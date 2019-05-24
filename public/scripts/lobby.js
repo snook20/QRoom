@@ -163,7 +163,7 @@ function displayRoom(roomIndex, roomTitle){
     //register the form
     let joinForm = document.getElementById("join_room_form");
     joinForm.onsubmit = function(){
-        joinRoom(roomIndex, roomTitle, joinForm.roomKey);
+        joinRoom(roomIndex, roomTitle, joinForm.room_key.value);
 
         //don't reload the page by returning false
         return false;
