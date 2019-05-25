@@ -11,7 +11,7 @@ const helpers = require('./server/helpers.js');
 const debug_log = helpers.debug_log;
 const hashQS = helpers.hashQS;
 
-var redirect_uri = require('./redirect_uri.js');
+var redirect_uri = require('./redirect_uri.js').redirect_uri;
 
 var app= express();
 app.use(express.static('./public'));
