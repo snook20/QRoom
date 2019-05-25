@@ -3,7 +3,7 @@ var request= require("request");
 var querystring= require("querystring");
 var bodyParser = require("body-parser");
 
-const clientInfo = require('./clientIds.js');
+const clientInfo = require('./ClientIds.js');
 var client_id = clientInfo.client_id;
 var client_secret = clientInfo.client_secret;
 

@@ -3,3 +3,4 @@ node_modules/
 test/
 .idea/
 *.pem
+*.ps1
