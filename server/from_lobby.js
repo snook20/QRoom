@@ -66,7 +66,9 @@ router.post('/moveToRoom', function(req, res) {
     }
 
     //it must also include an index and title
-    if(!req.body.moveTo_index || !req.body.moveTo_title){
+    if( !req.body.hasOwnProperty("moveTo_index") ||
+        !req.body.hasOwnProperty("moveTo_title"))
+    {
         res.sendStatus(statusCode.MISSING_INFO);
         return;
     }

@@ -11,8 +11,7 @@ const helpers = require('./server/helpers.js');
 const debug_log = helpers.debug_log;
 const hashQS = helpers.hashQS;
 
-var redirect_uri = 'http://localhost:8888/callback/';
-// var redirect_uri = "http://qroom.localtunnel.me/callback/";
+var redirect_uri = require('./redirect_uri.js');
 
 var app= express();
 app.use(express.static('./public'));

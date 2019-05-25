@@ -1,4 +1,5 @@
 ClientIds.js
+redirect_uri.js
 node_modules/
 test/
 .idea/
