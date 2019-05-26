@@ -1,4 +1,6 @@
 function afterGlobalLoad(hashParams){
+	layoutUserInfo();
+
 	//send get for the current queue
 	getQueue();
 	
@@ -55,7 +57,11 @@ function layoutSearch(tracks, n){
  * this button will call playSongCode with the given track id
  */
 function resultButton(track){
-	return `<button onclick= "playSongCode('${track.uri}')">${track.artists[0].name} : ${track.name}</button>`;
+	return `
+		<button onclick= "playSongCode('${track.uri}')" class = "list_item_button">
+			${track.artists[0].name} : ${track.name}
+		</button>
+	`;
 }
 
 /**

@@ -29,13 +29,6 @@ function afterGlobalLoad(hashParams){
 }
 
 /**
- * layout the user's info
- */
-function layoutUserInfo(){
-	document.getElementById("name").innerHTML= username;
-}
-
-/**
  * get the currently registered rooms and lay them out
  */
 function showRooms() {
@@ -105,7 +98,7 @@ function layoutRooms() {
 function createJoinRoomButton(index, title){
     let displayRoom = `displayRoom(${index},'${title}')`;
     return `
-        <button onclick="${displayRoom}" class="room_button">
+        <button onclick="${displayRoom}" class="list_item_button">
             ${title}
         </button>
     `;

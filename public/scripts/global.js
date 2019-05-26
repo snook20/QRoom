@@ -46,3 +46,10 @@ function quit() {
 	});
 	return '';
 }
+
+/**
+ * layout the user's info
+ */
+function layoutUserInfo(){
+	document.getElementById("name").innerHTML= username;
+}
