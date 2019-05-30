@@ -41,10 +41,20 @@ class room {
             let clientToken = this.clientTokens[username];
 
             if(PollResponseStore.isRegistered(clientToken, 'queue')){
-                PollResponseStore.res_json(this.clientTokens[username], 'queue', this.makeQueueInfoObject());
+                PollResponseStore.res_json(this.clientTokens[username], 'queue', this.getQueueInfo());
             }
         }
 	}
+
+	emitUsers(){
+        for(let username in this.clientTokens){
+            let clientToken = this.clientTokens[username];
+
+            if(PollResponseStore.isRegistered(clientToken, 'users')){
+                PollResponseStore.res_json(this.clientTokens[username], 'users', this.getUsernames());
+            }
+        }
+    }
 	
 	/* return a simple object with members reflecting
 	 * the state of this room
@@ -79,7 +89,7 @@ class room {
 	        playing : this.currentSong,
             queue : this.queue,
             startTime : this.songStartTime,
-            duration : this.currentSong ? null : this.currentSong.duration
+            duration : this.currentSong ? this.currentSong.duration : null
         }
     }
 
