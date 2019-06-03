@@ -5,6 +5,8 @@ window.onSpotifyWebPlaybackSDKReady = () => {
 		name: 'QRoom Player',
 		getOAuthToken: cb => { cb(token); }
 	});
+	//the getOAuthToken property is a function,
+	//spotify passes this function a function, and we pass that function the token
 
 	// Error handling
 	player.addListener('initialization_error', ({ message }) => { console.error("Player message " + message); });

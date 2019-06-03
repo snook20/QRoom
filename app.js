@@ -90,6 +90,8 @@ app.get('/callback', function(req, res){
 	request.post(authOptions, function(error, responce, body){
 		access_token= body.access_token;
 
+		console.log(body);
+
 		sendAccessToken(res, access_token);
 
 		//add this access_token to the room list
