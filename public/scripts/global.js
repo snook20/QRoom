@@ -1,14 +1,12 @@
-var access_token;
-var username;
-
 //once everything has loaded
 $(function(){
 	let hashParams= getHashParams();
-	access_token= hashParams.access_token;
-	username= hashParams.username;
+	window.state.access_token= hashParams.access_token;
+	window.state.username= hashParams.username;
 
 	console.log("global loaded");
-	afterGlobalLoad(hashParams);
+	beginApp();
+	//afterGlobalLoad(hashParams);
 });
 
 /**

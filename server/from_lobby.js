@@ -93,11 +93,7 @@ router.post('/moveToRoom', function(req, res) {
 
     //respond with the redirect location
     res.json({
-        redirect : hashQS("/room.html", {
-            username : username,
-            access_token : access_token,
-            room : move_to.title
-        })
+        room : move_to.getRoomInfo()
     });
 
     //emit queue for the room so all can see the new user
@@ -155,11 +151,7 @@ router.post('/create_room', function(req, res){
     //prompt the user to redirect to the new room
     //respond with the redirect location
     res.json({
-        redirect : hashQS("/room.html", {
-            username : username,
-            access_token : access_token,
-            room : title
-        })
+        room : new_room.getRoomInfo()
     });
 
     //emit the list of rooms for pollers

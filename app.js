@@ -90,8 +90,6 @@ app.get('/callback', function(req, res){
 	request.post(authOptions, function(error, responce, body){
 		access_token= body.access_token;
 
-		console.log(body);
-
 		sendAccessToken(res, access_token);
 
 		//add this access_token to the room list
@@ -153,7 +151,7 @@ function sendAccessToken(res, token) {
 	request(options, function (error, response, body) {
 		body = JSON.parse(body);
 
-		res.redirect(hashQS("/lobby.html", {
+		res.redirect(hashQS("/qroom.html", {
 			username: body.display_name,
 			access_token: token
 		}));

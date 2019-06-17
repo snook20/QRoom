@@ -157,7 +157,7 @@ router.post('/leaveRoom', function(req, res){
 
     //prompt the user to redirect themselves to the lobby
     res.json({
-        redirect : hashQS('/lobby.html', {
+        redirect : hashQS('/qroom.html', {
             username : req.body.username,
             access_token : req.body.access_token
         })
