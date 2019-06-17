@@ -271,3 +271,104 @@ In particular, the server maintains which room each user is in or whether they a
         </td>
     </tr>
 </table>
+
+<table>
+    <tr>
+        <td colspan="2"><strong>Get the queue</strong></td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>
+            Get the current queue in the room the user is currently in.
+            Also get other information such as users.
+        </td>
+    <tr>
+        <td>URL</td>
+        <td><code>/from_room/qetqueue</code></td>
+    </tr>
+    <tr>
+        <td>Method</td>
+        <td><code>GET</code></td>
+    </tr>
+    <tr>
+        <td>URL parameters</td>
+        <td>
+            None
+        </td>
+    </tr>
+    <tr>
+        <td>Data parameters</td>
+        <td>
+            <code>access_token</code> The access token for this user<br>
+            <code>username</code> The username of this user<br>
+        </td>
+    </tr>
+    <tr>
+        <td>Response</td>
+        <td>
+            <code>clientTokens</code> A map from username to client token of everyone in the room<br>
+            <code>playing</code> The currently playing song<br>
+            <code>queue</code> An array of songs in the current queue<br>
+            <code>duration</code> The duration in milliseconds of the current song<br>
+            <code>startTime</code> The start time of the current song
+        </td>
+    </tr>
+    <tr>
+        <td>Error</td>
+        <td>
+            <code>451</code> If the <code>username</code> or <code>access_token</code> are not supplied<br>
+            <code>420</code> If the user is not in a room<br>
+        </td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td colspan="2"><strong>Poll for the queue</strong></td>
+    </tr>
+    <tr>
+        <td>Description</td>
+        <td>
+            Get the current queue in the room the user is currently in.
+            Also get other information such as users. This will be responded
+            to when the queue changes or the list of users in the room changes.
+        </td>
+    <tr>
+        <td>URL</td>
+        <td><code>/from_room/pollqueue</code></td>
+    </tr>
+    <tr>
+        <td>Method</td>
+        <td><code>GET</code></td>
+    </tr>
+    <tr>
+        <td>URL parameters</td>
+        <td>
+            None
+        </td>
+    </tr>
+    <tr>
+        <td>Data parameters</td>
+        <td>
+            <code>access_token</code> The access token for this user<br>
+            <code>username</code> The username of this user<br>
+        </td>
+    </tr>
+    <tr>
+        <td>Response</td>
+        <td>
+            <code>clientTokens</code> A map from username to client token of everyone in the room<br>
+            <code>playing</code> The currently playing song<br>
+            <code>queue</code> An array of songs in the current queue<br>
+            <code>duration</code> The duration in milliseconds of the current song<br>
+            <code>startTime</code> The start time of the current song
+        </td>
+    </tr>
+    <tr>
+        <td>Error</td>
+        <td>
+            <code>451</code> If the <code>username</code> or <code>access_token</code> are not supplied<br>
+            <code>420</code> If the user is not in a room<br>
+        </td>
+    </tr>
+</table>

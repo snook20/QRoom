@@ -29,7 +29,7 @@ router.use('/', function(req, res, next){
 
     //if the client did not pass the access token, send error
     if(!body.access_token || !body.username){
-        res.sendStatus(451);
+        res.sendStatus(statusCode.MISSING_INFO);
         return;
     }
 
@@ -37,7 +37,7 @@ router.use('/', function(req, res, next){
 
     //if the client is not currently in a room, send error
     if(!current_room){
-        res.sendStatus(420);
+        res.sendStatus(statusCode.NOT_IN_ROOM);
         return;
     }
 

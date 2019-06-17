@@ -1,4 +1,6 @@
 import React from 'react';
+
+import {QRoomLayout} from '../components/QRoomLayout';
 import {Polling} from '../components/Polling';
 
 /**
@@ -16,11 +18,49 @@ function pollData(){
  * it does not handle polling
  */
 function UnWrappedRoom(props){
+    if(!props.poll){
+        return renderError();
+    }
+
+    console.log("unwrappedRoom props.poll", props.poll);
+
+    return (
+        <QRoomLayout
+            header={renderHeader(props.title)}
+            leftBar={renderUsers(Object.keys(props.poll.clientTokens))}
+        />
+    );
+}
+
+function renderHeader(title){
     return (
         <div>
-            In room {props.title}
+            <h1>QRoom</h1>
+            <h3>{title}</h3>
         </div>
     );
+}
+
+/**
+ * render the list of users given an array of usernames
+ */
+function renderUsers(usernames){
+    return (
+        <div>
+            <h3>Users</h3>
+            {usernames.map(username =>
+                <div key={username}>{username}</div>
+            )}
+        </div>
+    );
+}
+
+function renderError(){
+    return (
+        <div>
+            Error loading the room
+        </div>
+    )
 }
 
 /**
@@ -37,6 +77,7 @@ export function Room(props){
             init_data= {pollData}
             poll_url= '/from_room/pollqueue'
             poll_data= {pollData}
+            callback= {(data)=>console.log("Room poll", data)}
         >
             <UnWrappedRoom {...props}/>
         </Polling>

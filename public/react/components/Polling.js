@@ -38,7 +38,7 @@ class Polling extends React.Component {
 
         this.state = {
             //the data to be passed to children as props
-            data : {},
+            data : false,
         };
 
         this.polling= true;
