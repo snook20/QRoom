@@ -99,13 +99,14 @@ class Polling extends React.Component {
     }
 
     onError(error){
-        if(this.props.onError){
-            this.props.onError(error);
-        }
-
         //if the error is due to a timeout
         if(error.status === 0){
             this.poll();
+        }
+        else{
+            if(this.props.onError){
+                this.props.onError(error);
+            }
         }
     }
 

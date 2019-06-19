@@ -5,7 +5,7 @@ import React from 'react';
  *
  * Expected props:
  *
- * join: function - this will be invoked with the key provided when the
+ * onSubmit: function - this will be invoked with the key provided when the
  *                  user clicks the join button
  * room: object -
  *  title: string - the title of the room
@@ -15,13 +15,18 @@ class RoomView extends React.Component{
     constructor(props){
         super(props);
 
-        console.log("RoomView props", props);
-
         this.state= this.initState();
 
         //bind functions
         this.onFormChange= this.onFormChange.bind(this);
         this.onFormSubmit= this.onFormSubmit.bind(this);
+    }
+
+    initState(){
+        return {
+            //form will be a map from element name to value
+            form : {}
+        };
     }
 
     render(){
@@ -48,8 +53,6 @@ class RoomView extends React.Component{
 
 
     onFormChange(event){
-        console.log("target", event.target.name);
-
         let target= event.target;
         //event.target holds the DOM element that was changed
         this.setState(state => {
@@ -63,16 +66,8 @@ class RoomView extends React.Component{
         //do not refresh page
         event.preventDefault();
 
-        this.props.join(this.state.form.key_input);
+        this.props.onSubmit(this.state.form.key_input);
     }
-
-    initState(){
-        return {
-            //form will be a map from element name to value
-            form : {}
-        };
-    }
-
 }
 
 //update the prop of the given object and return the object

@@ -3,6 +3,9 @@ import React from 'react';
 import {QRoomLayout} from '../components/QRoomLayout';
 import {Polling} from '../components/Polling';
 
+import {SongSearch} from './SongSearch';
+import {Queue} from './Queue';
+
 /**
  * returns the data that should be sent to retrieve queue
  */
@@ -19,48 +22,83 @@ function pollData(){
  */
 function UnWrappedRoom(props){
     if(!props.poll){
-        return renderError();
+        return <RoomError />
     }
-
-    console.log("unwrappedRoom props.poll", props.poll);
 
     return (
         <QRoomLayout
-            header={renderHeader(props.title)}
-            leftBar={renderUsers(Object.keys(props.poll.clientTokens))}
+            header={
+                <RoomHeader title={props.title} />
+            }
+            leftBar={
+                <UserList usernames={tokensToNames(props.poll.clientTokens)} />
+            }
+            rightBar={
+                <SongSearch songClicked={addSongToQueue} />
+            }
+            main={
+                <Queue playing={props.poll.playing} queue={props.poll.queue} />
+            }
         />
     );
 }
 
-function renderHeader(title){
+function RoomHeader(props){
     return (
         <div>
             <h1>QRoom</h1>
-            <h3>{title}</h3>
+            <h3>{props.title}</h3>
         </div>
     );
 }
 
 /**
- * render the list of users given an array of usernames
+ * render the list of users
+ * props:
+ *  usernames : array - list of username
  */
-function renderUsers(usernames){
+function UserList(props){
     return (
         <div>
             <h3>Users</h3>
-            {usernames.map(username =>
+            {props.usernames.map(username =>
                 <div key={username}>{username}</div>
             )}
         </div>
     );
 }
 
-function renderError(){
-    return (
-        <div>
-            Error loading the room
-        </div>
-    )
+function RoomError(){
+    return <div>Error loading the room</div>
+}
+
+function addSongToQueue(trackURI){
+    const dataObject = {
+        access_token : window.state.access_token,
+        username : window.state.username,
+        songCode : trackURI
+    };
+
+    $.ajax({
+        type: 'POST',
+        url : '/from_room/addToQueue',
+        data : JSON.stringify(dataObject),
+        contentType: 'application/json',
+    });
+}
+
+/**
+ * @param clientTokens map from username to token
+ * @return array of usernames
+ */
+function tokensToNames(clientTokens){
+    let usernames= [];
+    try {
+        usernames= Object.keys(clientTokens);
+    }
+    finally {
+        return usernames;
+    }
 }
 
 /**
@@ -70,7 +108,6 @@ function renderError(){
  *  title: string - the title of the room
  */
 export function Room(props){
-    console.log("Room props", props);
     return (
         <Polling
             init_url= '/from_room/getqueue'

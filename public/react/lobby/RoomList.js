@@ -4,6 +4,9 @@ import {Polling} from '../components/Polling';
 
 /**
  * the room list that can be wrapped in a Polling component
+ * expected props:
+ *  roomClicked : function - will be invoked with roomClicked(index, title) when a
+ *                           room is clicked
  */
 function UnWrappedRoomList(props){
     //if there are no available rooms
@@ -19,7 +22,7 @@ function UnWrappedRoomList(props){
         <button
             className="list_item_button"
             key={room.title}
-            onClick={() => props.viewRoom(index, room.title)}
+            onClick={() => props.roomClicked(index, room.title)}
         >
             {room.title}
         </button>
@@ -44,7 +47,7 @@ export function RoomList(props){
             poll_url={'/from_lobby/pollrooms'}
             poll_data={pollData}
 
-            onError={error => console.log(error)}
+            onError={error => console.log("RoomList poll error", error.status, error)}
         >
             <UnWrappedRoomList {...props}/>
         </Polling>

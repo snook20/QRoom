@@ -5,7 +5,7 @@ import React from 'react';
  *
  * Expected props:
  *
- * create: function - this will be invoked when the user submits the form with the
+ * onSumbit: function - this will be invoked when the user submits the form with the
  *                    signature create(title, key)
  */
 class RoomCreate extends React.Component{
@@ -17,6 +17,13 @@ class RoomCreate extends React.Component{
         //bind functions
         this.onFormChange= this.onFormChange.bind(this);
         this.onFormSubmit= this.onFormSubmit.bind(this);
+    }
+
+    initState(){
+        return {
+            //form will be a map from element name to value
+            form : {}
+        };
     }
 
     render(){
@@ -49,8 +56,6 @@ class RoomCreate extends React.Component{
 
 
     onFormChange(event){
-        console.log("target", event.target.name);
-
         let target= event.target;
         //event.target holds the DOM element that was changed
         this.setState(state => {
@@ -60,21 +65,13 @@ class RoomCreate extends React.Component{
         });
     }
 
-    onFormSubmit(event){
+    onFormSubmit(event) {
         //do not refresh page
         event.preventDefault();
 
-        let form= this.state.form;
-        this.props.create(form.title_input, form.key_input);
+        let form = this.state.form;
+        this.props.onSubmit(form.title_input, form.key_input);
     }
-
-    initState(){
-        return {
-            //form will be a map from element name to value
-            form : {}
-        };
-    }
-
 }
 
 //update the prop of the given object and return the object

@@ -7,11 +7,18 @@ class App extends React.Component {
     constructor(props){
         super(props);
 
-        this.state= initState();
+        this.state= this.initState();
 
         //bind the functions
         this.joinRoom= this.joinRoom.bind(this);
         this.createRoom= this.createRoom.bind(this);
+    }
+
+    initState(){
+        return {
+            //the current room or null for lobby
+            current_room : null
+        }
     }
 
     render(){
@@ -97,16 +104,6 @@ class App extends React.Component {
         this.setState({
             current_room : data.room
         })
-    }
-}
-
-/**
- * get the initial state
- */
-function initState(){
-    return {
-        //the current room or null for lobby
-        current_room : null
     }
 }
 

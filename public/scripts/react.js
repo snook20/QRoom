@@ -35,3 +35,7 @@ function getHashParams() {
     }
     return hashParams;
 }
+
+window.debug_log= function(){
+    console.trace(...arguments);
+};

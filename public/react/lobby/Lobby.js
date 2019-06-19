@@ -18,12 +18,22 @@ class Lobby extends React.Component{
     constructor(props){
         super(props);
 
-        this.state= initState();
+        this.state= this.initState();
 
         //bind functions
         this.viewRoom= this.viewRoom.bind(this);
         this.createRoom= this.createRoom.bind(this);
         this.recieveKey= this.recieveKey.bind(this);
+    }
+
+    initState(){
+        return {
+            //whether the user is creating a room
+            create: false,
+
+            //the room to join, or null if no room selected
+            view: null
+        };
     }
 
     render() {
@@ -46,7 +56,7 @@ class Lobby extends React.Component{
             //note the difference between this.createRoom and props.createRoom
             return (
                 <RoomCreate
-                    create={this.props.createRoom}
+                    onSubmit={this.props.createRoom}
                 />
             );
         }
@@ -55,7 +65,7 @@ class Lobby extends React.Component{
             return (
                 <RoomView
                     room={this.state.view}
-                    join={this.recieveKey}
+                    onSubmit={this.recieveKey}
                 />
             );
         }
@@ -67,7 +77,7 @@ class Lobby extends React.Component{
         return (
             <div>
                 <h3>Join a QRoom</h3>
-                <RoomList viewRoom={this.viewRoom}/>
+                <RoomList roomClicked={this.viewRoom}/>
             </div>
         );
     }
@@ -111,15 +121,6 @@ class Lobby extends React.Component{
     }
 }
 
-function initState(){
-    return {
-        //whether the user is creating a room
-        create: false,
-
-        //the room to join, or null if no room selected
-        view: null
-    };
-}
 
 function renderHeader(){
     return (
