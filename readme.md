@@ -10,25 +10,32 @@ to queues.
 
 Streaming is only available for Spotify premium users.
 
-# What's new
-QRoom is in the process of being moved to React, for cleanliness and speed.
-It's going to be nicer and easier to maintain and grow this way -- hopefully.
+# React
+QRoom front end is now a React app.
 
-**This means that front end code must be built.**
+Here's what that looks like:
+
+`index.html` contains only the html page for the login button. This page 
+is not on React, it's just a straight html -- no even JavaScript. Just a button
+that gets pressed and redirects the user to Spotify authorization and eventually
+to `qroom.html`.
+
+`qroom.html` is the only other html page. It simply has a container `div` for
+React stuff. The React stuff is controlled by a webpack generated script --
+`public/dist/qroom.bundle.js'.
+
+## Webpack
 
 Right now, we are using webpack with babel loaders to convert post-modern JS
-and JSX into a single `qroom.bundle.js` file that is `<script>`ed in from the html.
+and JSX into a single `qroom.bundle.js` file that is `<script>`ed in from the `qroom.html`.
 
-To build this bundled `.js` file, you can run the command `webpack` or `npm build`.
-Running `npm start` will do the build and start the NodeJS server all in one.
+To build this bundled `.js` file, you can run the command `webpack` or `npm build`. This will
+build the bundle as well as begin watching for changes in the React code. These changes will
+automatically be rebuilt to the bundled script file.
 
-We have yet to setup code watching or hot reloading, so every time you make
-a front-end change, the code will have to be re-built.
+So, typically, when writing front end code you'll want two terminals:
 
-Although, we are not this far along in the React porting process, I think that
-we will still have the `index.html` page simply be the login screen, which will
-redirect to `qroom.html` or something like that, where the React code will be
-loaded.
+One to start webpack watching and one to start the node server.
 
 # Test Account
 There is a Spotify acccount for testing QRoom.
