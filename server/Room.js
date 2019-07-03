@@ -41,7 +41,7 @@ class room {
             let clientToken = this.clientTokens[username];
 
             if(PollResponseStore.isRegistered(clientToken, 'queue')){
-                PollResponseStore.res_json(this.clientTokens[username], 'queue', this.getQueueInfo());
+                PollResponseStore.res_json(this.clientTokens[username], 'queue', this.makeQueueInfoObject());
             }
         }
 	}

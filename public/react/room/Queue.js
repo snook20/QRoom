@@ -29,7 +29,7 @@ function NextUp(props){
         <div>
             {
                 props.queue.map( (song, index) =>
-                    <div>
+                    <div key={song.uri}>
                         {index+1}) {song.artist} : {song.title}
                     </div>
                 )
