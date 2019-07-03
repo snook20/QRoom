@@ -1,9 +1,7 @@
 window.onSpotifyWebPlaybackSDKReady = () => {
-	const token = getHashParams().access_token;
-
 	const player = new Spotify.Player({
 		name: 'QRoom Player',
-		getOAuthToken: cb => { cb(token); }
+		getOAuthToken: cb => { cb(window.state.access_token); }
 	});
 	//the getOAuthToken property is a function,
 	//spotify passes this function a function, and we pass that function the token
@@ -40,7 +38,7 @@ function activatePlayer(device_id){
 		url: "https://api.spotify.com/v1/me/player",
 		method: 'PUT',
 		headers: {
-			'Authorization' : 'Bearer ' + access_token,
+			'Authorization' : 'Bearer ' + window.state.access_token,
 			"Content-Type": "application/json"
 		},
 		
@@ -54,10 +52,6 @@ function activatePlayer(device_id){
 
 		success : function(body){
 			console.log("switched playback");
-			
-			//play the current song in this room
-			//play the current song
-			playCurrentSong();
 		}
 	});
 }

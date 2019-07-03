@@ -16,6 +16,9 @@ $(function(){
     beginApp();
 });
 
+/**
+ * initiate react stuff
+ */
 function beginApp() {
     const domContainer = document.querySelector('#react_container');
     ReactDOM.render(React.createElement(App), domContainer);
